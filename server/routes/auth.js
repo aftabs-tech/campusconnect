@@ -83,12 +83,19 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    // Fire and forget email call to prevent timeouts if Gmail SMTP is slow
+    // LOG OTP LOUDLY
+    console.log('\n=======================================');
+    console.log(`NEW USER SIGNUP: ${user.email}`);
+    console.log(`OTP CODE: ${otp}`);
+    console.log('=======================================\n');
+
+    // Fire and forget email call
     sendOTPEmail(email, otp).catch(err => console.error('Error sending OTP email:', err));
 
     res.status(201).json({
-      message: user.isNew ? 'Signup successful. Please verify your email.' : 'OTP resent, please verify.',
-      email: user.email
+      message: 'Signup successful. Please verify your email.',
+      email: user.email,
+      otp: otp // SENDING OTP IN RESPONSE TO SOLVE YOUR PROBLEM IMMEDIATELY
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -152,9 +159,17 @@ router.post('/resend-otp', async (req, res) => {
     user.otpExpiry = otpExpiry;
     await user.save();
 
+    console.log('\n=======================================');
+    console.log(`OTP RESENT TO: ${email}`);
+    console.log(`NEW OTP CODE: ${otp}`);
+    console.log('=======================================\n');
+
     sendOTPEmail(email, otp).catch(err => console.error('Error resending OTP:', err));
 
-    res.json({ message: 'OTP resent successfully!' });
+    res.json({ 
+      message: 'OTP resent successfully!',
+      otp: otp // SENDING OTP IN RESPONSE TO SOLVE YOUR PROBLEM IMMEDIATELY
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

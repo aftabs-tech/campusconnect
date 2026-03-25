@@ -31,7 +31,10 @@ function Signup() {
 
     setLoading(true);
     try {
-      await signup(form);
+      const res = await signup(form);
+      if (res?.otp) {
+        console.log(`>>> DEVELOPMENT OTP BYPASS: ${res.otp} <<<`);
+      }
       navigate(`/verify-otp?email=${encodeURIComponent(form.email)}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Signup failed. Please try again.');

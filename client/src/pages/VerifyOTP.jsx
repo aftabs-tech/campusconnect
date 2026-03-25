@@ -53,6 +53,9 @@ function VerifyOTP() {
     try {
       setLoading(true);
       const { data } = await API.post('/auth/resend-otp', { email });
+      if (data.otp) {
+        console.log(`>>> DEVELOPMENT OTP BYPASS: ${data.otp} <<<`);
+      }
       setError('');
       alert(data.message);
     } catch (err) {
