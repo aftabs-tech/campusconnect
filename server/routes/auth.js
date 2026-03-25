@@ -1,29 +1,17 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend'); // Switch back to API-based
 const router = express.Router();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_PORT == 465, // Use SSL for 465, STARTTLS for 587
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false // Helps with some cloud hosting provider restrictions
-  },
-  connectionTimeout: 10000, // 10 seconds
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendOTP = async (email, otp) => {
   try {
-    console.log(`>>> Attempting SMTP Send to ${email} (OTP: ${otp}) <<<`);
+    console.log(`>>> Sending OTP via Resend API to ${email}: ${otp} <<<`);
     
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
       to: email,
       subject: 'CampusConnect — Verify Your Email',
       html: `
@@ -40,10 +28,9 @@ const sendOTP = async (email, otp) => {
       `
     });
 
-    console.log("Email sent ✅", info.messageId);
+    console.log("Email sent ✅");
   } catch (err) {
-    console.error("Email error ❌ FULL ERROR DETAILS:");
-    console.error(err); // This will show the exact reason (e.g., authentication, sender rejected)
+    console.error("Email API failure ❌", err.message);
   }
 };
 
@@ -97,8 +84,8 @@ router.post('/signup', async (req, res) => {
     console.log(`OTP CODE: ${otp}`);
     console.log('=======================================\n');
 
-    // Use await for sending OTP as requested
-    await sendOTP(user.email, otp);
+    // Remove await to send email in background
+    sendOTP(user.email, otp);
 
     res.status(201).json({
       message: 'Signup successful. Please verify your email.',
@@ -172,8 +159,8 @@ router.post('/resend-otp', async (req, res) => {
     console.log(`NEW OTP CODE: ${otp}`);
     console.log('=======================================\n');
 
-    // Use await for resending OTP as requested
-    await sendOTP(email, otp);
+    // Remove await to send email in background
+    sendOTP(email, otp);
 
     res.json({ 
       message: 'OTP resent successfully!',
