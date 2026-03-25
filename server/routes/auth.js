@@ -77,9 +77,8 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    await sendOTPEmail(email, otp);
-
-    const isRetry = !!(req.body.retry || user._id); // Simple check if it was an update or create
+    // Fire and forget email call to prevent timeouts if Gmail SMTP is slow
+    sendOTPEmail(email, otp).catch(err => console.error('Error sending OTP email:', err));
 
     res.status(201).json({
       message: user.isNew ? 'Signup successful. Please verify your email.' : 'OTP resent, please verify.',

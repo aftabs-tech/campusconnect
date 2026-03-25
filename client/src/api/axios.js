@@ -3,7 +3,8 @@ import axios from 'axios';
 export const BASE_URL = 'https://api-node-backend-uu9f.onrender.com';
 
 const API = axios.create({
-  baseURL: `${BASE_URL}/api`
+  baseURL: `${BASE_URL}/api`,
+  timeout: 20000 // 20 seconds
 });
 
 API.interceptors.request.use((config) => {

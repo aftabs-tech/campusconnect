@@ -26,8 +26,7 @@ export function AuthProvider({ children }) {
 
   const signup = async (userData) => {
     const { data } = await API.post('/auth/signup', userData);
-    localStorage.setItem('campusconnect_user', JSON.stringify(data));
-    setUser(data);
+    // Note: We don't log in the user here because they must verify OTP first
     return data;
   };
 

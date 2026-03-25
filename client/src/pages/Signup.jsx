@@ -31,7 +31,7 @@ function Signup() {
 
     setLoading(true);
     try {
-      const { data } = await signup(form);
+      await signup(form);
       navigate(`/verify-otp?email=${encodeURIComponent(form.email)}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Signup failed. Please try again.');
