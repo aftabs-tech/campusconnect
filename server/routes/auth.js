@@ -7,16 +7,20 @@ const router = express.Router();
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
-  secure: false, // Standard for port 587
+  secure: process.env.SMTP_PORT == 465, // Use SSL for 465, STARTTLS for 587
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false // Helps with some cloud hosting provider restrictions
+  },
+  connectionTimeout: 10000, // 10 seconds
 });
 
 const sendOTP = async (email, otp) => {
   try {
-    console.log(`>>> Sending OTP for ${email}: ${otp} <<<`);
+    console.log(`>>> Attempting SMTP Send to ${email} (OTP: ${otp}) <<<`);
     
     const info = await transporter.sendMail({
       from: process.env.EMAIL_FROM,
@@ -38,7 +42,8 @@ const sendOTP = async (email, otp) => {
 
     console.log("Email sent ✅", info.messageId);
   } catch (err) {
-    console.error("Email error ❌", err);
+    console.error("Email error ❌ FULL ERROR DETAILS:");
+    console.error(err); // This will show the exact reason (e.g., authentication, sender rejected)
   }
 };
 
