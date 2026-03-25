@@ -4,9 +4,9 @@ import { FiHome, FiMessageCircle, FiCalendar, FiUser, FiLogOut, FiSun, FiMoon, F
 
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-import API from '../api/axios';
+import API, { BASE_URL } from '../api/axios';
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = BASE_URL;
 
 function Navbar() {
   const { user, logout } = useAuth();

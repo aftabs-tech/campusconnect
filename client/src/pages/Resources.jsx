@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
+import API, { BASE_URL } from '../api/axios';
 import { 
   FiFileText, 
   FiDownload, 
@@ -130,7 +130,7 @@ function Resources() {
 
       // Trigger actual download
       // Since it's a relative path on the same server, we can build the full URL
-      const downloadUrl = `http://localhost:5000${resource.file}`;
+      const downloadUrl = `${BASE_URL}${resource.file}`;
       window.open(downloadUrl, '_blank');
     } catch (err) {
       console.error('Download error:', err);

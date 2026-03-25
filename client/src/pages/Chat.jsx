@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
+import API, { BASE_URL } from '../api/axios';
 import { io } from 'socket.io-client';
 import { FiSend, FiMessageCircle, FiSearch, FiCheck } from 'react-icons/fi';
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = BASE_URL;
 
 // Skeleton
 function ChatSkeleton() {
