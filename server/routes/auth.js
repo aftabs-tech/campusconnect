@@ -6,9 +6,9 @@ const router = express.Router();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const sendOTPEmail = async (email, otp) => {
+const sendOTP = async (email, otp) => {
   try {
-    console.log(`>>> Attempting to send OTP for ${email}: ${otp} <<<`);
+    console.log(`>>> Sending OTP for ${email}: ${otp} <<<`);
     
     await resend.emails.send({
       from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
@@ -84,8 +84,8 @@ router.post('/signup', async (req, res) => {
     console.log(`OTP CODE: ${otp}`);
     console.log('=======================================\n');
 
-    // Fire and forget email call
-    sendOTPEmail(email, otp).catch(err => console.error('Error sending OTP email:', err));
+    // Use await for sending OTP as requested
+    await sendOTP(user.email, otp);
 
     res.status(201).json({
       message: 'Signup successful. Please verify your email.',
@@ -159,7 +159,8 @@ router.post('/resend-otp', async (req, res) => {
     console.log(`NEW OTP CODE: ${otp}`);
     console.log('=======================================\n');
 
-    sendOTPEmail(email, otp).catch(err => console.error('Error resending OTP:', err));
+    // Use await for resending OTP as requested
+    await sendOTP(email, otp);
 
     res.json({ 
       message: 'OTP resent successfully!',
