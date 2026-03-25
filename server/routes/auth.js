@@ -6,12 +6,14 @@ const router = express.Router();
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // Use SSL
+  port: 587,
+  secure: false, // Use STARTTLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  }
+  },
+  logger: true,
+  debug: true // Show debug output in logs
 });
 
 const sendOTPEmail = async (email, otp) => {
