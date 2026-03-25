@@ -1,20 +1,21 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { Resend } = require('resend'); // Switch back to API-based
+const https = require('https'); // Use native https for zero dependencies
 const router = express.Router();
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendOTP = async (email, otp) => {
   try {
-    console.log(`>>> Sending OTP via Resend API to ${email}: ${otp} <<<`);
+    console.log(`>>> Sending OTP via Brevo API to ${email}: ${otp} <<<`);
     
-    await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-      to: email,
-      subject: 'CampusConnect — Verify Your Email',
-      html: `
+    const data = JSON.stringify({
+      sender: { 
+        name: "CampusConnect", 
+        email: process.env.SMTP_USER || "aftab.s@somaiya.edu" 
+      },
+      to: [{ email: email }],
+      subject: "CampusConnect — Verify Your Email",
+      htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
           <h2 style="color: #6C63FF; text-align: center;">Welcome to CampusConnect!</h2>
           <p>Thank you for joining our community. Please use the following One-Time Password (OTP) to verify your email address. This code is valid for 10 minutes.</p>
@@ -28,9 +29,35 @@ const sendOTP = async (email, otp) => {
       `
     });
 
-    console.log("Email sent ✅");
+    const options = {
+      hostname: 'api.brevo.com',
+      port: 443,
+      path: '/v3/smtp/email',
+      method: 'POST',
+      headers: {
+        'api-key': process.env.BREVO_API_KEY || process.env.SMTP_PASS,
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      console.log(`Brevo API Status: ${res.statusCode}`);
+      res.on('data', (d) => {
+        process.stdout.write(d);
+      });
+    });
+
+    req.on('error', (error) => {
+      console.error("Brevo API Error ❌", error);
+    });
+
+    req.write(data);
+    req.end();
+
+    console.log("Email request sent to Brevo API ✅");
   } catch (err) {
-    console.error("Email API failure ❌", err.message);
+    console.error("Email failure ❌", err.message);
   }
 };
 
