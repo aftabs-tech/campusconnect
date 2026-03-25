@@ -49,6 +49,19 @@ function VerifyOTP() {
     }
   };
 
+  const handleResend = async () => {
+    try {
+      setLoading(true);
+      const { data } = await API.post('/auth/resend-otp', { email });
+      setError('');
+      alert(data.message);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error resending code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-container">
@@ -88,7 +101,7 @@ function VerifyOTP() {
 
           <div className="auth-link">
             Didn't receive a code? 
-            <button onClick={() => window.location.reload()} style={{ background: 'none', border: 'none', color: 'var(--primary-light)', cursor: 'pointer', fontWeight: 600, padding: 0, marginLeft: 5 }}>
+            <button onClick={handleResend} disabled={loading} style={{ background: 'none', border: 'none', color: 'var(--primary-light)', cursor: 'pointer', fontWeight: 600, padding: 0, marginLeft: 5 }}>
               Resend
             </button>
           </div>
