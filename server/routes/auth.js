@@ -1,42 +1,37 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const router = express.Router();
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // Use SSL
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  logger: true,
-  debug: true
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendOTPEmail = async (email, otp) => {
-  // Console log the OTP so you can see it in your Render Logs!
-  console.log(`>>> OTP for ${email}: ${otp} <<<`);
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'CampusConnect — Verify Your Email',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <h2 style="color: #6C63FF; text-align: center;">Welcome to CampusConnect!</h2>
-        <p>Thank you for joining our community. Please use the following One-Time Password (OTP) to verify your email address. This code is valid for 10 minutes.</p>
-        <div style="background: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #333; border-radius: 5px;">
-          ${otp}
+  try {
+    console.log(`>>> Attempting to send OTP for ${email}: ${otp} <<<`);
+    
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+      to: email,
+      subject: 'CampusConnect — Verify Your Email',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+          <h2 style="color: #6C63FF; text-align: center;">Welcome to CampusConnect!</h2>
+          <p>Thank you for joining our community. Please use the following One-Time Password (OTP) to verify your email address. This code is valid for 10 minutes.</p>
+          <div style="background: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #333; border-radius: 5px;">
+            ${otp}
+          </div>
+          <p style="margin-top: 20px;">If you didn't create an account with us, please ignore this email.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #999; text-align: center;">CampusConnect &copy; 2026</p>
         </div>
-        <p style="margin-top: 20px;">If you didn't create an account with us, please ignore this email.</p>
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-        <p style="font-size: 12px; color: #999; text-align: center;">CampusConnect &copy; 2026</p>
-      </div>
-    `
-  };
-  return transporter.sendMail(mailOptions);
+      `
+    });
+
+    console.log("Email sent ✅");
+  } catch (err) {
+    console.log("Email error ❌", err);
+  }
 };
 
 const generateToken = (id) => {
