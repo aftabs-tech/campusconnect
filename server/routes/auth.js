@@ -6,8 +6,12 @@ const router = express.Router();
 
 const sendOTP = async (email, otp) => {
   try {
-    console.log(`>>> Sending OTP via Brevo API to ${email}: ${otp} <<<`);
+    const apiKey = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
+    const maskedKey = apiKey ? `${apiKey.substring(0, 10)}...` : 'MISSING';
     
+    console.log(`>>> Sending OTP via Brevo API to ${email}: ${otp} <<<`);
+    console.log(`>>> Using API Key (Masked): ${maskedKey} <<<`);
+
     const data = JSON.stringify({
       sender: { 
         name: "CampusConnect", 
@@ -35,7 +39,7 @@ const sendOTP = async (email, otp) => {
       path: '/v3/smtp/email',
       method: 'POST',
       headers: {
-        'api-key': process.env.BREVO_API_KEY || process.env.SMTP_PASS,
+        'api-key': apiKey,
         'Content-Type': 'application/json',
         'Content-Length': data.length
       }
