@@ -1,0 +1,13 @@
+node_modules/
+.env
+dist/
+.DS_Store
+*.log
+.gemini/
+antigravity/
+brain/
+tmp/
+.vscode/
+.idea/
+*.local
+package-lock.json

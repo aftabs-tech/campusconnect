@@ -1,17 +1,25 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const router = express.Router();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false, // Standard for port 587
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 const sendOTP = async (email, otp) => {
   try {
     console.log(`>>> Sending OTP for ${email}: ${otp} <<<`);
     
-    await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
       to: email,
       subject: 'CampusConnect — Verify Your Email',
       html: `
@@ -28,9 +36,9 @@ const sendOTP = async (email, otp) => {
       `
     });
 
-    console.log("Email sent ✅");
+    console.log("Email sent ✅", info.messageId);
   } catch (err) {
-    console.log("Email error ❌", err);
+    console.error("Email error ❌", err);
   }
 };
 
