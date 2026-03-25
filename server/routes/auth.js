@@ -7,62 +7,27 @@ const router = express.Router();
 const sendOTP = async (email, otp) => {
   try {
     const apiKey = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
-    const maskedKey = apiKey ? `${apiKey.substring(0, 10)}...` : 'MISSING';
-    
     console.log(`>>> Sending OTP via Brevo API to ${email}: ${otp} <<<`);
-    console.log(`>>> Using API Key (Masked): ${maskedKey} <<<`);
 
-    const data = JSON.stringify({
-      sender: { 
-        name: "CampusConnect", 
-        email: process.env.SMTP_USER || "aftab.s@somaiya.edu" 
-      },
-      to: [{ email: email }],
-      subject: "CampusConnect — Verify Your Email",
-      htmlContent: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-          <h2 style="color: #6C63FF; text-align: center;">Welcome to CampusConnect!</h2>
-          <p>Thank you for joining our community. Please use the following One-Time Password (OTP) to verify your email address. This code is valid for 10 minutes.</p>
-          <div style="background: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #333; border-radius: 5px;">
-            ${otp}
-          </div>
-          <p style="margin-top: 20px;">If you didn't create an account with us, please ignore this email.</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #999; text-align: center;">CampusConnect &copy; 2026</p>
-        </div>
-      `
-    });
-
-    const options = {
-      hostname: 'api.brevo.com',
-      port: 443,
-      path: '/v3/smtp/email',
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
         'api-key': apiKey,
         'accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data, 'utf8')
-      }
-    };
-
-    const req = https.request(options, (res) => {
-      console.log(`Brevo API Status: ${res.statusCode}`);
-      res.on('data', (d) => {
-        process.stdout.write(d);
-      });
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: "CampusConnect", email: process.env.SMTP_USER || "aftab.s@somaiya.edu" },
+        to: [{ email: email }],
+        subject: "CampusConnect - Verify Your Email",
+        htmlContent: "<div style='font-family:Arial;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e0e0e0;border-radius:10px'><h2 style='color:#6C63FF;text-align:center'>Welcome to CampusConnect!</h2><p>Your OTP to verify your email is:</p><div style='background:#f4f4f4;padding:15px;text-align:center;font-size:24px;font-weight:bold;letter-spacing:5px;color:#333;border-radius:5px'>" + otp + "</div><p style='margin-top:20px'>This code is valid for 10 minutes. If you did not sign up, please ignore this email.</p></div>"
+      })
     });
 
-    req.on('error', (error) => {
-      console.error("Brevo API Error ❌", error);
-    });
-
-    req.write(data);
-    req.end();
-
-    console.log("Email request sent to Brevo API ✅");
+    const result = await response.json();
+    console.log(`Brevo API Status: ${response.status}`, JSON.stringify(result));
   } catch (err) {
-    console.error("Email failure ❌", err.message);
+    console.error("Email failure", err.message);
   }
 };
 
