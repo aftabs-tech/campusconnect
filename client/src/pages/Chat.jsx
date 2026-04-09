@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import API, { BASE_URL } from '../api/axios';
+import API, { BASE_URL, getImageUrl } from '../api/axios';
 import { io } from 'socket.io-client';
 import { FiSend, FiMessageCircle, FiSearch, FiCheck } from 'react-icons/fi';
 
@@ -113,6 +113,8 @@ function Chat() {
       socketRef.current?.emit('joinChat', activeChat._id);
       fetchMessages(activeChat._id);
       setIsTyping(false);
+      // Auto-mark message notifications as read for this chat
+      API.put(`/notifications/read-chat/${activeChat._id}`).catch(() => {});
     }
     return () => {
       if (activeChat) socketRef.current?.emit('leaveChat', activeChat._id);
@@ -231,7 +233,7 @@ function Chat() {
   const getOtherUser = (chat) => chat?.participants?.find(p => p._id !== user?._id);
 
   const renderAvatar = (u, sizeClass = 'avatar-sm') => {
-    if (u?.avatar) return <div className={`avatar ${sizeClass}`}><img src={u.avatar} alt={u.name} /></div>;
+    if (u?.avatar) return <div className={`avatar ${sizeClass}`}><img src={getImageUrl(u.avatar)} alt={u.name} /></div>;
     return <div className={`avatar ${sizeClass}`}>{getInitials(u?.name)}</div>;
   };
 

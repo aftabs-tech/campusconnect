@@ -15,4 +15,11 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// Helper to resolve image URLs from backend
+export const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path; // Already a full URL
+  return `${BASE_URL}${path}`; // Prepend base URL to relative paths like /uploads/...
+};
+
 export default API;

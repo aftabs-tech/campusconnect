@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
+import API, { getImageUrl } from '../api/axios';
 import { FiEdit2, FiMessageCircle, FiMapPin, FiCamera, FiUserPlus, FiUserCheck, FiUserX, FiClock, FiCheck, FiX, FiBookmark } from 'react-icons/fi';
 
 function Profile() {
@@ -199,7 +199,7 @@ function Profile() {
   const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '?';
 
   const renderAvatar = (u, sizeClass = 'avatar-xl') => {
-    const imgSrc = u?.avatar;
+    const imgSrc = getImageUrl(u?.avatar);
     if (imgSrc) {
       return (
         <div className={`avatar ${sizeClass}`} style={{ margin: '0 auto' }}>
@@ -392,7 +392,7 @@ function Profile() {
                   <div className="post-content">{post.content}</div>
                   {post.image && (
                     <div className="post-image" style={{ marginTop: 12 }}>
-                      <img src={post.image} alt="Post" />
+                      <img src={getImageUrl(post.image)} alt="Post" />
                     </div>
                   )}
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
@@ -419,7 +419,7 @@ function Profile() {
                   <div key={post._id} className="glass-card post-card" style={{ marginBottom: 16, borderLeft: '4px solid var(--primary)' }}>
                      <div className="post-header" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div className="avatar avatar-sm" style={{ width: 32, height: 32 }}>
-                          {post.author?.avatar ? <img src={post.author.avatar} alt="" /> : getInitials(post.author?.name)}
+                          {post.author?.avatar ? <img src={getImageUrl(post.author.avatar)} alt="" /> : getInitials(post.author?.name)}
                         </div>
                         <div>
                           <div style={{ fontWeight: 600, fontSize: 14 }}>{post.author?.name}</div>
@@ -429,7 +429,7 @@ function Profile() {
                     <div className="post-content">{post.content}</div>
                     {post.image && (
                       <div className="post-image" style={{ marginTop: 12 }}>
-                        <img src={post.image} alt="Post" />
+                        <img src={getImageUrl(post.image)} alt="Post" />
                       </div>
                     )}
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

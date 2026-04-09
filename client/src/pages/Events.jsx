@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
+import API, { getImageUrl } from '../api/axios';
 import { FiCalendar, FiMapPin, FiUsers, FiPlus, FiCheck, FiX, FiImage } from 'react-icons/fi';
 
 const CATEGORIES = [
@@ -191,6 +191,7 @@ function Events() {
                 className="input-field"
                 value={form.date}
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
+                min={new Date().toISOString().slice(0, 16)}
                 required
                 id="event-date-input"
               />
@@ -314,7 +315,7 @@ function Events() {
                   opacity: isPast ? 0.7 : 1
                 }}>
                   {event.image ? (
-                    <img src={event.image} alt={event.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={getImageUrl(event.image)} alt={event.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <span style={{ fontSize: 48 }}>{CATEGORY_EMOJIS[event.category] || '📌'}</span>
                   )}

@@ -4,7 +4,7 @@ import { FiHome, FiMessageCircle, FiCalendar, FiUser, FiLogOut, FiSun, FiMoon, F
 
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-import API, { BASE_URL } from '../api/axios';
+import API, { BASE_URL, getImageUrl } from '../api/axios';
 
 const SOCKET_URL = BASE_URL;
 
@@ -144,7 +144,7 @@ function Navbar() {
                       }}
                     >
                       <div className="avatar avatar-sm">
-                        {notif.sender?.avatar ? <img src={notif.sender.avatar} alt="" /> : notif.sender?.name?.[0]}
+                        {notif.sender?.avatar ? <img src={getImageUrl(notif.sender.avatar)} alt="" /> : notif.sender?.name?.[0]}
                       </div>
                       <div className="notif-content">
                         <p>{notif.message}</p>
@@ -179,7 +179,7 @@ function Navbar() {
 
         <div className="sidebar-user" onClick={() => navigate('/profile')}>
           <div className="avatar avatar-sm">
-            {user?.avatar ? <img src={user.avatar} alt={user.name} /> : getInitials(user?.name)}
+            {user?.avatar ? <img src={getImageUrl(user.avatar)} alt={user.name} /> : getInitials(user?.name)}
           </div>
           <div className="sidebar-user-info">
             <div className="name">{user?.name}</div>

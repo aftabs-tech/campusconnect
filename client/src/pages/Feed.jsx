@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
+import API, { getImageUrl } from '../api/axios';
 import { FiMessageCircle, FiSend, FiTrash2, FiImage, FiSearch, FiBarChart2, FiPlus, FiX, FiCheck, FiBookmark } from 'react-icons/fi';
 
 
@@ -200,7 +200,7 @@ function Feed() {
 
   const renderAvatar = (u, sizeClass = 'avatar-sm') => {
     if (u?.avatar) {
-      return <div className={`avatar ${sizeClass}`}><img src={u.avatar} alt={u.name} /></div>;
+      return <div className={`avatar ${sizeClass}`}><img src={getImageUrl(u.avatar)} alt={u.name} /></div>;
     }
     return <div className={`avatar ${sizeClass}`}>{getInitials(u?.name)}</div>;
   };
@@ -415,7 +415,7 @@ function Feed() {
               )}
 
               {post.image && (
-                <div className="post-image"><img src={post.image} alt="Post" /></div>
+                <div className="post-image"><img src={getImageUrl(post.image)} alt="Post" /></div>
               )}
 
 

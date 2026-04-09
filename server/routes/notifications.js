@@ -44,6 +44,25 @@ router.put('/:id/read', protect, async (req, res) => {
   }
 });
 
+// PUT /api/notifications/read-chat/:chatId — mark all message notifications for a specific chat as read
+router.put('/read-chat/:chatId', protect, async (req, res) => {
+  try {
+    const chatId = req.params.chatId;
+    const result = await Notification.updateMany(
+      {
+        recipient: req.user._id,
+        type: 'message',
+        read: false,
+        link: { $regex: chatId }
+      },
+      { read: true }
+    );
+    res.json({ success: true, modifiedCount: result.modifiedCount });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // PUT /api/notifications/read-all — mark all as read
 router.put('/read-all', protect, async (req, res) => {
   try {
