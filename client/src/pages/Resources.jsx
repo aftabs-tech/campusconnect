@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import API, { BASE_URL } from '../api/axios';
+import API, { BASE_URL, getImageUrl } from '../api/axios';
 import { 
   FiFileText, 
   FiDownload, 
@@ -128,10 +128,26 @@ function Resources() {
         r._id === resource._id ? { ...r, downloads: r.downloads + 1 } : r
       ));
 
-      // Trigger actual download
-      // Since it's a relative path on the same server, we can build the full URL
+      // Build the full download URL
       const downloadUrl = `${BASE_URL}${resource.file}`;
-      window.open(downloadUrl, '_blank');
+
+      // Fetch file as blob and trigger download
+      try {
+        const response = await fetch(downloadUrl);
+        if (!response.ok) throw new Error('File not found');
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = resource.fileName || resource.title;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } catch {
+        // Fallback: open in new tab
+        window.open(downloadUrl, '_blank');
+      }
     } catch (err) {
       console.error('Download error:', err);
     }
@@ -251,7 +267,7 @@ function Resources() {
       )}
 
       {/* Filter Bar */}
-      <div className="glass-card resource-filters" style={{ padding: 16, marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
+      <div className="resource-filters" style={{ padding: 16, marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', position: 'relative', zIndex: 10, overflow: 'visible' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
           <FiSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
@@ -330,7 +346,7 @@ function Resources() {
                 <div className="resource-footer">
                   <div className="uploader-info">
                     <div className="avatar avatar-xs">
-                      {res.uploader?.avatar ? <img src={res.uploader.avatar} alt="" /> : res.uploader?.name?.[0]}
+                      {res.uploader?.avatar ? <img src={getImageUrl(res.uploader.avatar)} alt="" /> : res.uploader?.name?.[0]}
                     </div>
                     <span>{res.uploader?.name}</span>
                   </div>
@@ -371,6 +387,8 @@ function Resources() {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 20px;
+          position: relative;
+          z-index: 1;
         }
         .resource-card {
           display: flex;
