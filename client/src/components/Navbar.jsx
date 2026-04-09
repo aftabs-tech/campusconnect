@@ -32,8 +32,13 @@ function Navbar() {
         setUnreadCount(prev => prev + 1);
       });
 
+      // Listen for notification refresh events from other components (e.g. Chat page)
+      const handleNotificationsUpdated = () => fetchNotifications();
+      window.addEventListener('notifications-updated', handleNotificationsUpdated);
+
       return () => {
         socketRef.current?.disconnect();
+        window.removeEventListener('notifications-updated', handleNotificationsUpdated);
       };
     }
   }, [user]);

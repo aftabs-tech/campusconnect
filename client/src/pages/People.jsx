@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
+import API, { getImageUrl } from '../api/axios';
 import { FiSearch, FiUserPlus, FiUserCheck, FiClock, FiCheck, FiX, FiMessageCircle } from 'react-icons/fi';
 
 function People() {
@@ -177,7 +177,7 @@ function People() {
             <div key={user._id} className="glass-card user-card">
               <div className="avatar avatar-lg" style={{ margin: '0 auto 12px', cursor: 'pointer' }} 
                 onClick={() => navigate(`/profile/${user._id}`)}>
-                {user.avatar ? <img src={user.avatar} alt={user.name} /> : getInitials(user.name)}
+                {user.avatar ? <img src={getImageUrl(user.avatar)} alt={user.name} /> : getInitials(user.name)}
               </div>
               <div className="name" onClick={() => navigate(`/profile/${user._id}`)} style={{ cursor: 'pointer' }}>
                 {user.name}

@@ -114,7 +114,10 @@ function Chat() {
       fetchMessages(activeChat._id);
       setIsTyping(false);
       // Auto-mark message notifications as read for this chat
-      API.put(`/notifications/read-chat/${activeChat._id}`).catch(() => {});
+      API.put(`/notifications/read-chat/${activeChat._id}`).then(() => {
+        // Notify Navbar to refresh notification count
+        window.dispatchEvent(new Event('notifications-updated'));
+      }).catch(() => {});
     }
     return () => {
       if (activeChat) socketRef.current?.emit('leaveChat', activeChat._id);
