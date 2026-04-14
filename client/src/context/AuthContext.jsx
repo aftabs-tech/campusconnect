@@ -10,11 +10,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('campusconnect_user');
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
-    setLoading(false);
+    const syncUser = async () => {
+      const stored = localStorage.getItem('campusconnect_user');
+      if (stored) {
+        try {
+          const localUser = JSON.parse(stored);
+          setUser(localUser);
+          
+          // Sync with server to get fresh profile (including Cloudinary URLs)
+          const { data } = await API.get('/users/me');
+          // Merge server data with local token
+          const merged = { ...localUser, ...data };
+          localStorage.setItem('campusconnect_user', JSON.stringify(merged));
+          setUser(merged);
+        } catch (err) {
+          console.error('Session sync failed:', err);
+          // If 401, logout
+          if (err.response?.status === 401) {
+            logout();
+          }
+        }
+      }
+      setLoading(false);
+    };
+    syncUser();
   }, []);
 
   const login = async (email, password) => {
@@ -26,7 +45,6 @@ export function AuthProvider({ children }) {
 
   const signup = async (userData) => {
     const { data } = await API.post('/auth/signup', userData);
-    // Note: We don't log in the user here because they must verify OTP first
     return data;
   };
 
@@ -36,9 +54,11 @@ export function AuthProvider({ children }) {
   };
 
   const updateUser = (updatedData) => {
-    const merged = { ...user, ...updatedData };
-    localStorage.setItem('campusconnect_user', JSON.stringify(merged));
-    setUser(merged);
+    setUser(prev => {
+      const merged = { ...prev, ...updatedData };
+      localStorage.setItem('campusconnect_user', JSON.stringify(merged));
+      return merged;
+    });
   };
 
   return (

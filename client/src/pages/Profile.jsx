@@ -176,7 +176,8 @@ function Profile() {
       });
       setProfile(data);
       if (isOwnProfile) {
-        updateUser({ name: data.name, college: data.college, avatar: data.avatar });
+        // Pass the FULL updated user object to sync AuthContext and localStorage
+        updateUser(data);
       }
       setAvatarFile(null);
       setEditing(false);
