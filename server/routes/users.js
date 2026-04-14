@@ -8,7 +8,7 @@ const router = express.Router();
 // GET /api/users/me — get own profile
 router.get('/me', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('connections', 'name avatar role college');
+    const user = await User.findById(req.user._id).populate('connections', 'name avatar college year');
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -56,19 +56,15 @@ router.put('/me', protect, upload.single('avatar'), async (req, res) => {
 // GET /api/users — browse users (filter by role)
 router.get('/', protect, async (req, res) => {
   try {
-    const { role, search } = req.query;
     let filter = { _id: { $ne: req.user._id } };
-
-    if (role) filter.role = role;
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
         { college: { $regex: search, $options: 'i' } }
       ];
     }
-
     const users = await User.find(filter)
-      .select('name avatar role college connections sentRequests incomingRequests')
+      .select('name avatar college year connections sentRequests incomingRequests')
       .sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {
@@ -79,7 +75,7 @@ router.get('/', protect, async (req, res) => {
 // GET /api/users/:id — view another user's profile
 router.get('/:id', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).populate('connections', 'name avatar role college');
+    const user = await User.findById(req.params.id).populate('connections', 'name avatar college year');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

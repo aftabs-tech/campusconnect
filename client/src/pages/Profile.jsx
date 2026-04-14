@@ -318,7 +318,19 @@ function Profile() {
             )}
           </div>
           <h2 className="profile-name">{profile.name}</h2>
-          <span className={`badge badge-${profile.role}`}>{profile.role}</span>
+          {/* Dynamic Seniority Badge */}
+          {!isOwnProfile && authUser && profile.year && (
+            <div style={{ marginBottom: 12 }}>
+              {profile.year > authUser.year ? (
+                <span className="badge badge-senior">Senior</span>
+              ) : profile.year < authUser.year ? (
+                <span className="badge badge-junior">Junior</span>
+              ) : (
+                <span className="badge badge-peer">Peer</span>
+              )}
+            </div>
+          )}
+          {isOwnProfile && <span className="badge badge-peer" style={{ marginBottom: 12 }}>You</span>}
           <p className="profile-college">
             <FiMapPin style={{ verticalAlign: 'middle', marginRight: 4 }} />
             {profile.college}

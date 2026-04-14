@@ -8,7 +8,6 @@ function Signup() {
     email: '',
     password: '',
     college: '',
-    role: '',
     year: 1
   });
   const [error, setError] = useState('');
@@ -23,11 +22,6 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (!form.role) {
-      setError('Please select your role (Junior or Senior)');
-      return;
-    }
 
     setLoading(true);
     try {
@@ -128,30 +122,6 @@ function Signup() {
                 <option value={3}>3rd Year</option>
                 <option value={4}>4th Year</option>
               </select>
-            </div>
-
-            <div className="input-group">
-              <label>I am a</label>
-              <div className="role-selector">
-                <div
-                  className={`role-option ${form.role === 'junior' ? 'active' : ''}`}
-                  onClick={() => setForm({ ...form, role: 'junior' })}
-                  id="role-junior"
-                >
-                  <div className="icon">🎓</div>
-                  <div className="label">Junior</div>
-                  <div className="desc">Learning & growing</div>
-                </div>
-                <div
-                  className={`role-option ${form.role === 'senior' ? 'active' : ''}`}
-                  onClick={() => setForm({ ...form, role: 'senior' })}
-                  id="role-senior"
-                >
-                  <div className="icon">🌟</div>
-                  <div className="label">Senior</div>
-                  <div className="desc">Mentoring & guiding</div>
-                </div>
-              </div>
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading} id="signup-submit">

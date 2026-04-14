@@ -80,7 +80,6 @@ router.post('/signup', async (req, res) => {
         name,
         email,
         password,
-        role,
         college,
         year: year || 1,
         otp,
@@ -137,7 +136,6 @@ router.post('/login', async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
       college: user.college,
       avatar: user.avatar,
       bio: user.bio,
@@ -216,7 +214,6 @@ router.post('/verify-otp', async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
       college: user.college,
       avatar: user.avatar,
       token: generateToken(user._id)

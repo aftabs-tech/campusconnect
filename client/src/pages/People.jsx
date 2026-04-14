@@ -182,8 +182,23 @@ function People() {
               <div className="name" onClick={() => navigate(`/profile/${user._id}`)} style={{ cursor: 'pointer' }}>
                 {user.name}
               </div>
-              <div className="college">{user.college}</div>
-              <span className={`badge badge-${user.role}`} style={{ marginBottom: 16 }}>{user.role}</span>
+              <div className="college" style={{ marginBottom: 4 }}>{user.college}</div>
+              <div style={{ marginBottom: 16 }}>
+                {user.year && authUser && (
+                  <>
+                    {user.year > authUser.year ? (
+                      <span className="badge badge-senior">Senior</span>
+                    ) : user.year < authUser.year ? (
+                      <span className="badge badge-junior">Junior</span>
+                    ) : (
+                      <span className="badge badge-peer">Peer</span>
+                    )}
+                  </>
+                )}
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>
+                  Year {user.year}
+                </span>
+              </div>
               
               <div className="user-card-actions" style={{ marginTop: 'auto', width: '100%' }}>
                 {renderConnectionButton(user)}

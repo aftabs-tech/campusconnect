@@ -27,11 +27,6 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     select: false
   },
-  role: {
-    type: String,
-    enum: ['junior', 'senior'],
-    required: [true, 'Please select your role']
-  },
   college: {
     type: String,
     required: [true, 'Please provide your college name'],

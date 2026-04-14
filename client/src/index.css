@@ -303,6 +303,12 @@ select.input-field option {
   border: 1px solid rgba(108, 99, 255, 0.3);
 }
 
+.badge-peer {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
 .badge-category {
   background: rgba(255, 170, 0, 0.12);
   color: var(--warning);
