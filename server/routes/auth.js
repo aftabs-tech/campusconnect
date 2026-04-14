@@ -23,7 +23,7 @@ const sendOTP = async (email, otp) => {
         'content-type': 'application/json'
       },
       body: JSON.stringify({
-        sender: { name: "CampusConnect", email: process.env.SMTP_USER || "aftab.s@somaiya.edu" },
+        sender: { name: "CampusConnect", email: process.env.EMAIL_USER },
         to: [{ email: email }],
         subject: "CampusConnect - Verify Your Email",
         htmlContent: "<div style='font-family:Arial;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e0e0e0;border-radius:10px'><h2 style='color:#6C63FF;text-align:center'>Welcome to CampusConnect!</h2><p>Your OTP to verify your email is:</p><div style='background:#f4f4f4;padding:15px;text-align:center;font-size:24px;font-weight:bold;letter-spacing:5px;color:#333;border-radius:5px'>" + otp + "</div><p style='margin-top:20px'>This code is valid for 10 minutes. If you did not sign up, please ignore this email.</p></div>"
