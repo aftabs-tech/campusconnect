@@ -23,19 +23,32 @@ router.put('/me', protect, upload.single('avatar'), async (req, res) => {
 
     if (name) user.name = name;
     if (bio !== undefined) user.bio = bio;
+    if (college) user.college = college;
+    
+    // Ensure year is saved as a number
+    if (year) user.year = Number(year);
+
+    // Resilient skills parsing
+    if (skills) {
+      try {
+        const parsed = typeof skills === 'string' ? JSON.parse(skills) : skills;
+        user.skills = Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        // Fallback for non-JSON string
+        user.skills = skills.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+
     if (req.file) {
       // Upload avatar to Cloudinary for persistent storage
       user.avatar = await uploadToCloudinary(req.file.buffer, 'campusconnect/avatars');
     }
-    if (year) user.year = year;
-    if (skills) {
-      user.skills = typeof skills === 'string' ? JSON.parse(skills) : skills;
-    }
-    if (college) user.college = college;
 
     const updated = await user.save();
+    console.log(`User ${user.email} profile updated successfully`);
     res.json(updated);
   } catch (error) {
+    console.error('Profile update error:', error);
     res.status(500).json({ message: error.message });
   }
 });

@@ -161,12 +161,15 @@ function Profile() {
     try {
       const formData = new FormData();
       formData.append('name', editForm.name);
-      formData.append('bio', editForm.bio);
+      formData.append('bio', editForm.bio || '');
       formData.append('college', editForm.college);
       formData.append('year', editForm.year);
-      formData.append('skills', JSON.stringify(
-        editForm.skills.split(',').map(s => s.trim()).filter(Boolean)
-      ));
+      
+      const skillsArray = editForm.skills 
+        ? editForm.skills.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+      formData.append('skills', JSON.stringify(skillsArray));
+
       if (avatarFile) {
         formData.append('avatar', avatarFile);
       }
@@ -174,15 +177,18 @@ function Profile() {
       const { data } = await API.put('/users/me', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      
       setProfile(data);
       if (isOwnProfile) {
-        // Pass the FULL updated user object to sync AuthContext and localStorage
         updateUser(data);
       }
       setAvatarFile(null);
       setEditing(false);
+      alert('Profile updated successfully!');
     } catch (err) {
       console.error('Error updating profile:', err);
+      const errMsg = err.response?.data?.message || err.message;
+      alert(`Failed to save changes: ${errMsg}`);
     } finally {
       setSaving(false);
     }
