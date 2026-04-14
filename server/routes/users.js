@@ -2,6 +2,7 @@ const express = require('express');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { uploadToCloudinary } = require('../config/cloudinary');
 const router = express.Router();
 
 // GET /api/users/me — get own profile
@@ -22,7 +23,10 @@ router.put('/me', protect, upload.single('avatar'), async (req, res) => {
 
     if (name) user.name = name;
     if (bio !== undefined) user.bio = bio;
-    if (req.file) user.avatar = `/uploads/${req.file.filename}`;
+    if (req.file) {
+      // Upload avatar to Cloudinary for persistent storage
+      user.avatar = await uploadToCloudinary(req.file.buffer, 'campusconnect/avatars');
+    }
     if (year) user.year = year;
     if (skills) {
       user.skills = typeof skills === 'string' ? JSON.parse(skills) : skills;

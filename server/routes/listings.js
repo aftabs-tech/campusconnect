@@ -2,6 +2,7 @@ const express = require('express');
 const Listing = require('../models/Listing');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { uploadToCloudinary } = require('../config/cloudinary');
 const router = express.Router();
 
 // GET /api/listings — Get all listings with filters
@@ -63,7 +64,11 @@ router.get('/:id', protect, async (req, res) => {
 router.post('/', protect, upload.array('images', 5), async (req, res) => {
   try {
     const { title, description, price, category, condition } = req.body;
-    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
+    // Upload all images to Cloudinary in parallel
+    const images = req.files
+      ? await Promise.all(req.files.map(file => uploadToCloudinary(file.buffer, 'campusconnect/listings')))
+      : [];
 
     if (images.length === 0) {
       return res.status(400).json({ message: 'At least one image is required' });

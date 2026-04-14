@@ -2,6 +2,7 @@ const express = require('express');
 const Event = require('../models/Event');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { uploadToCloudinary } = require('../config/cloudinary');
 const router = express.Router();
 
 // GET /api/events — list events
@@ -31,7 +32,12 @@ router.get('/', protect, async (req, res) => {
 router.post('/', protect, upload.single('image'), async (req, res) => {
   try {
     const { title, description, date, location, college, category } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : '';
+
+    // Upload image to Cloudinary if provided
+    let image = '';
+    if (req.file) {
+      image = await uploadToCloudinary(req.file.buffer, 'campusconnect/events');
+    }
 
     const event = await Event.create({
       organizer: req.user._id,

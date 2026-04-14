@@ -3,6 +3,7 @@ const Post = require('../models/Post');
 const Notification = require('../models/Notification');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { uploadToCloudinary } = require('../config/cloudinary');
 const router = express.Router();
 
 // GET /api/posts — paginated feed with search
@@ -57,7 +58,12 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
   try {
     console.log('Post creation request body:', req.body);
     const { content, isPoll, pollQuestion, pollOptions, pollExpiresAt } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : '';
+
+    // Upload image to Cloudinary if provided
+    let image = '';
+    if (req.file) {
+      image = await uploadToCloudinary(req.file.buffer, 'campusconnect/posts');
+    }
 
     const isPollActive = isPoll === 'true' || isPoll === true;
     let pollData = null;

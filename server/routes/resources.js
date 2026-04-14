@@ -3,8 +3,7 @@ const router = express.Router();
 const Resource = require('../models/Resource');
 const { protect } = require('../middleware/auth');
 const resourceUpload = require('../middleware/resourceUpload');
-const fs = require('fs');
-const path = require('path');
+const { cloudinary, uploadRawToCloudinary } = require('../config/cloudinary');
 
 // @desc    Get all resources with filters
 // @route   GET /api/resources
@@ -44,13 +43,20 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
       return res.status(400).json({ message: 'Please upload a file' });
     }
 
+    // Upload file to Cloudinary for persistent storage
+    const { url } = await uploadRawToCloudinary(
+      req.file.buffer,
+      req.file.originalname,
+      'campusconnect/resources'
+    );
+
     const resource = await Resource.create({
       title,
       description,
       subject,
       semester,
       category,
-      file: `/uploads/resources/${req.file.filename}`,
+      file: url,
       fileName: req.file.originalname,
       fileSize: req.file.size,
       uploader: req.user._id
@@ -91,12 +97,6 @@ router.delete('/:id', protect, async (req, res) => {
     // Check if user is uploader or admin (assuming role might be 'admin')
     if (resource.uploader.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to delete this resource' });
-    }
-
-    // Delete file from storage
-    const filePath = path.join(__dirname, '..', resource.file);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
     }
 
     await resource.deleteOne();
