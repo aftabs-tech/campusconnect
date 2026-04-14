@@ -53,16 +53,19 @@ router.put('/me', protect, upload.single('avatar'), async (req, res) => {
   }
 });
 
-// GET /api/users — browse users (filter by role)
+// GET /api/users — browse users
 router.get('/', protect, async (req, res) => {
   try {
+    const { search } = req.query;
     let filter = { _id: { $ne: req.user._id } };
+    
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
         { college: { $regex: search, $options: 'i' } }
       ];
     }
+    
     const users = await User.find(filter)
       .select('name avatar college year connections sentRequests incomingRequests')
       .sort({ createdAt: -1 });
