@@ -13,7 +13,13 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please provide your email'],
     unique: true,
     lowercase: true,
-    trim: true
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return v.endsWith('@somaiya.edu');
+      },
+      message: props => `${props.value} is not a valid Somaiya email!`
+    }
   },
   password: {
     type: String,

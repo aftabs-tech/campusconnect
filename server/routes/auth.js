@@ -4,6 +4,12 @@ const User = require('../models/User');
 const https = require('https'); // Use native https for zero dependencies
 const router = express.Router();
 
+const ALLOWED_DOMAIN = '@somaiya.edu';
+
+const validateEmailDomain = (email) => {
+  return email.toLowerCase().endsWith(ALLOWED_DOMAIN);
+};
+
 const sendOTP = async (email, otp) => {
   try {
     const apiKey = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
@@ -39,6 +45,13 @@ const generateToken = (id) => {
 router.post('/signup', async (req, res) => {
   try {
     const { name, email, password, role, college, year } = req.body;
+
+    // Domain validation BEFORE everything else
+    if (!validateEmailDomain(email)) {
+      return res.status(400).json({ 
+        message: `Only Somaiya email addresses (${ALLOWED_DOMAIN}) are allowed.` 
+      });
+    }
 
     let user = await User.findOne({ email });
 
@@ -98,6 +111,13 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Domain validation to enforce restricted access
+    if (!validateEmailDomain(email)) {
+      return res.status(400).json({ 
+        message: `Invalid email. Only ${ALLOWED_DOMAIN} addresses are permitted.` 
+      });
+    }
 
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
