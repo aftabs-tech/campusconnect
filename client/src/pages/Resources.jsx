@@ -546,7 +546,7 @@ function Resources() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            fileInputRef.current.click();
+            fileInputRef.current?.click();
           }}
           disabled={uploading}
           title="Upload resource"
