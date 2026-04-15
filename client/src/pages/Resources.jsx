@@ -193,8 +193,12 @@ function Resources() {
         r._id === resource._id ? { ...r, downloads: r.downloads + 1 } : r
       ));
 
-      // Open Cloudinary file directly in a new tab
-      window.open(resource.file, '_blank');
+      // Open Cloudinary file with force-download flag
+      const downloadUrl = resource.file.includes('?') 
+        ? `${resource.file}&fl_attachment=true` 
+        : `${resource.file}?fl_attachment=true`;
+        
+      window.open(downloadUrl, '_blank');
     } catch (err) {
       console.error('Download error:', err);
     }
