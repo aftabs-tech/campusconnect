@@ -12,7 +12,9 @@ import {
   FiUploadCloud,
   FiBookOpen,
   FiLayers,
-  FiChevronDown
+  FiChevronDown,
+  FiFolder,
+  FiType
 } from 'react-icons/fi';
 import CustomSelect from '../components/CustomSelect';
 
@@ -41,6 +43,8 @@ const SEMESTERS = [
 function Resources() {
   const { user } = useAuth();
   const [resources, setResources] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [viewMode, setViewMode] = useState('folders'); // 'folders' or 'all'
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   
@@ -65,7 +69,17 @@ function Resources() {
 
   useEffect(() => {
     fetchResources();
-  }, [category, semester, search, subject]);
+    fetchFolders();
+  }, [category, semester, search, subject, viewMode]);
+
+  const fetchFolders = async () => {
+    try {
+      const { data } = await API.get('/resources/folders');
+      setFolders(data);
+    } catch (err) {
+      console.error('Error fetching folders:', err);
+    }
+  };
 
   const fetchResources = async () => {
     setLoading(true);
@@ -182,9 +196,25 @@ function Resources() {
           <h1>Resource Library</h1>
           <p>Share and access study materials, notes, and previous year papers</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? <><FiX /> Cancel</> : <><FiPlus /> Upload Resource</>}
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div className="tab-switcher glass-card">
+            <button 
+              className={`tab-btn ${viewMode === 'folders' ? 'active' : ''}`}
+              onClick={() => setViewMode('folders')}
+            >
+              <FiFolder /> Folders
+            </button>
+            <button 
+              className={`tab-btn ${viewMode === 'all' ? 'active' : ''}`}
+              onClick={() => setViewMode('all')}
+            >
+              <FiLayers /> All Resources
+            </button>
+          </div>
+          <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+            {showForm ? <><FiX /> Cancel</> : <><FiPlus /> Upload Resource</>}
+          </button>
+        </div>
       </header>
 
       {/* Upload Form */}
@@ -330,67 +360,154 @@ function Resources() {
       </div>
 
 
-      {/* Content */}
-      {loading ? (
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>Loading library...</p>
-        </div>
-      ) : resources.length === 0 ? (
-        <div className="empty-state">
-          <div className="icon">📚</div>
-          <h3>The library is empty</h3>
-          <p>No resources found for the selected filters. Be the first to share one!</p>
-        </div>
-      ) : (
-        <div className="resources-grid">
-          {resources.map(res => (
-            <div key={res._id} className="glass-card resource-card">
-              <div className="resource-icon">
-                <FiFileText size={32} />
-              </div>
-              <div className="resource-details">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span className="resource-category-badge">{res.category}</span>
-                    <h3 className="resource-title">{res.title}</h3>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {res.uploader?._id === user?._id && (
-                      <button className="btn-icon danger" onClick={() => handleDelete(res._id)}>
-                        <FiTrash2 />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="resource-info">
-                  <span><FiLayers size={12} /> {res.subject}</span>
-                  <span><FiBookOpen size={12} /> Semester {res.semester}</span>
-                </div>
+      {/* Filter Bar */}
+      {viewMode === 'all' && (
+        <div className="resource-filters" style={{ padding: 16, marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', position: 'relative', zIndex: 10, overflow: 'visible' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+            <FiSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Search by title..." 
+              className="input-field" 
+              style={{ paddingLeft: 40 }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-                <p className="resource-desc">{res.description || 'No description provided.'}</p>
-
-                <div className="resource-footer">
-                  <div className="uploader-info">
-                    <div className="avatar avatar-xs">
-                      {res.uploader?.avatar ? <img src={getImageUrl(res.uploader.avatar)} alt="" /> : res.uploader?.name?.[0]}
-                    </div>
-                    <span>{res.uploader?.name}</span>
-                  </div>
-                  <div className="resource-stats">
-                    <span>{formatFileSize(res.fileSize)}</span>
-                    <span className="dot"></span>
-                    <span>{res.downloads} downloads</span>
-                  </div>
-                </div>
-
-                <button className="btn btn-secondary btn-full" onClick={() => handleDownload(res)}>
-                  <FiDownload /> Download Resource
-                </button>
-              </div>
+          <div style={{ display: 'flex', gap: 12, flex: 1 }}>
+            <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
+              <CustomSelect 
+                options={CATEGORIES}
+                value={category}
+                onChange={setCategory}
+                icon={FiLayers}
+              />
             </div>
-          ))}
+
+            <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
+              <CustomSelect 
+                options={SEMESTERS}
+                value={semester}
+                onChange={setSemester}
+                icon={FiBookOpen}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Folders View */}
+      {viewMode === 'folders' && !loading && (
+        <div className="folders-section">
+          <div className="folders-grid">
+            {folders.length === 0 ? (
+              <div className="empty-state" style={{ gridColumn: '1/-1' }}>
+                <div className="icon">📂</div>
+                <h3>No folders yet</h3>
+                <p>Folders will automatically appear here once resources are uploaded.</p>
+              </div>
+            ) : (
+              folders.map((folder, index) => (
+                <div 
+                  key={index} 
+                  className="glass-card folder-card"
+                  onClick={() => {
+                    setSubject(folder.subject);
+                    setViewMode('all');
+                  }}
+                >
+                  <div className="folder-icon">
+                    <FiFolder size={24} />
+                  </div>
+                  <div className="folder-info">
+                    <span className="folder-year">Year {folder.year} • {folder.course}</span>
+                    <h3 className="folder-name">{folder.subject}</h3>
+                  </div>
+                  <div className="folder-arrow">
+                    <FiChevronDown style={{ transform: 'rotate(-90deg)' }} />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Content for All Resources */}
+      {viewMode === 'all' && (
+        <div className="resources-list-section">
+          {subject && (
+            <div className="active-filter-chip">
+              <span>Showing: <strong>{subject}</strong></span>
+              <button onClick={() => setSubject('')}><FiX /></button>
+            </div>
+          )}
+          
+          {loading ? (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Loading library...</p>
+            </div>
+          ) : resources.length === 0 ? (
+            <div className="empty-state">
+              <div className="icon">📚</div>
+              <h3>The library is empty</h3>
+              <p>No resources found for the selected filters. Be the first to share one!</p>
+            </div>
+          ) : (
+            <div className="resources-grid">
+              {resources.map(res => (
+                <div key={res._id} className="glass-card resource-card">
+                  {/* ... Existing resource card ... */}
+                  <div className="resource-icon">
+                    <FiFileText size={32} />
+                  </div>
+                  <div className="resource-details">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span className="resource-category-badge">{res.category}</span>
+                        <h3 className="resource-title">{res.title}</h3>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {res.uploader?._id === user?._id && (
+                          <button className="btn-icon danger" onClick={() => handleDelete(res._id)}>
+                            <FiTrash2 />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="resource-info">
+                      <span><FiLayers size={12} /> {res.subject}</span>
+                      <span><FiBookOpen size={12} /> Semester {res.semester}</span>
+                      <span><FiFolder size={12} /> Yr {res.year}</span>
+                    </div>
+
+                    <p className="resource-desc">{res.description || 'No description provided.'}</p>
+
+                    <div className="resource-footer">
+                      <div className="uploader-info">
+                        <div className="avatar avatar-xs">
+                          {res.uploader?.avatar ? <img src={getImageUrl(res.uploader.avatar)} alt="" /> : res.uploader?.name?.[0]}
+                        </div>
+                        <span>{res.uploader?.name}</span>
+                      </div>
+                      <div className="resource-stats">
+                        <span>{formatFileSize(res.fileSize)}</span>
+                        <span className="dot"></span>
+                        <span>{res.downloads} downloads</span>
+                      </div>
+                    </div>
+
+                    <button className="btn btn-secondary btn-full" onClick={() => handleDownload(res)}>
+                      <FiDownload /> Download Resource
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -512,6 +629,92 @@ function Resources() {
         .btn-icon.danger:hover {
           background: rgba(255, 71, 87, 0.1);
           color: #ff4757;
+        }
+        .tab-switcher {
+          display: flex;
+          padding: 4px;
+          border-radius: var(--radius-md);
+        }
+        .tab-btn {
+          padding: 8px 16px;
+          border-radius: var(--radius-sm);
+          border: none;
+          background: transparent;
+          color: var(--text-muted);
+          cursor: pointer;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.2s;
+        }
+        .tab-btn.active {
+          background: var(--bg-card);
+          color: var(--primary);
+          box-shadow: var(--shadow-sm);
+        }
+        .folders-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 20px;
+        }
+        .folder-card {
+          display: flex;
+          align-items: center;
+          padding: 16px;
+          gap: 16px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .folder-card:hover {
+          transform: translateY(-2px);
+          border-color: var(--primary);
+        }
+        .folder-icon {
+          width: 48px;
+          height: 48px;
+          background: rgba(var(--primary-rgb), 0.1);
+          color: var(--primary);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .folder-info {
+          flex: 1;
+        }
+        .folder-year {
+          display: block;
+          font-size: 11px;
+          color: var(--text-muted);
+          margin-bottom: 2px;
+        }
+        .folder-name {
+          font-size: 16px;
+          margin: 0;
+          color: var(--text-primary);
+        }
+        .folder-arrow {
+          color: var(--text-muted);
+        }
+        .active-filter-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px 16px;
+          background: rgba(var(--primary-rgb), 0.1);
+          color: var(--primary);
+          border-radius: 100px;
+          margin-bottom: 20px;
+          font-size: 14px;
+        }
+        .active-filter-chip button {
+          background: transparent;
+          border: none;
+          color: var(--primary);
+          display: flex;
+          cursor: pointer;
+          padding: 2px;
         }
       `}</style>
     </div>
