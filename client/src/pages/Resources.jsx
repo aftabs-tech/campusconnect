@@ -193,10 +193,14 @@ function Resources() {
         r._id === resource._id ? { ...r, downloads: r.downloads + 1 } : r
       ));
 
-      // Open Cloudinary file with force-download flag
-      const downloadUrl = resource.file.includes('?') 
-        ? `${resource.file}&fl_attachment=true` 
-        : `${resource.file}?fl_attachment=true`;
+      // Open Cloudinary file with force-download flag (only for non-raw resources)
+      // Adding transformations to /raw/upload/ URLs causes 401 errors
+      const isRaw = resource.file.includes('/raw/upload/');
+      const downloadUrl = isRaw 
+        ? resource.file 
+        : resource.file.includes('?') 
+          ? `${resource.file}&fl_attachment=true` 
+          : `${resource.file}?fl_attachment=true`;
         
       window.open(downloadUrl, '_blank');
     } catch (err) {

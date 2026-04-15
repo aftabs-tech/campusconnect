@@ -51,7 +51,8 @@ const uploadRawToCloudinary = (fileBuffer, originalName, folder = 'resources') =
       {
         folder,
         resource_type: 'auto',
-        type: 'upload', // Ensure public access without signature requirements
+        type: 'upload',
+        flags: 'attachment', // Force download headers on the server side
         public_id: `${Date.now()}-${originalName}`
       },
       (error, result) => {
