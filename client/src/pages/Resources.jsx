@@ -47,6 +47,11 @@ const YEARS = [
   { value: 4, label: '4th Year' }
 ];
 
+const FILTER_YEARS = [
+  { value: 'all', label: 'All Years' },
+  ...YEARS
+];
+
 function Resources() {
   const { user } = useAuth();
   const [resources, setResources] = useState([]);
@@ -57,7 +62,7 @@ function Resources() {
   
   // Filters
   const [category, setCategory] = useState('all');
-  const [semester, setSemester] = useState('all');
+  const [yearFilter, setYearFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [subject, setSubject] = useState('');
   const [activeYear, setActiveYear] = useState('');
@@ -81,7 +86,7 @@ function Resources() {
   useEffect(() => {
     fetchResources();
     fetchFolders();
-  }, [category, semester, search, subject, activeYear, activeCourse, activeFolderId, viewMode]);
+  }, [category, yearFilter, search, subject, activeYear, activeCourse, activeFolderId, viewMode]);
 
   const handleDirectUpload = async (e) => {
     const selectedFile = e.target.files[0];
@@ -129,7 +134,7 @@ function Resources() {
     try {
       let query = [];
       if (category !== 'all') query.push(`category=${category}`);
-      if (semester !== 'all') query.push(`semester=${semester}`);
+      if (yearFilter !== 'all') query.push(`year=${yearFilter}`);
       if (search) query.push(`search=${search}`);
       if (subject) query.push(`subject=${subject}`);
       if (activeYear) query.push(`year=${activeYear}`);
@@ -432,21 +437,12 @@ function Resources() {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 12, flex: 1 }}>
+        <div style={{ display: 'flex', gap: 12, flex: 1, maxWidth: '300px', marginLeft: 'auto' }}>
           <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
             <CustomSelect 
-              options={CATEGORIES}
-              value={category}
-              onChange={setCategory}
-              icon={FiLayers}
-            />
-          </div>
-
-          <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
-            <CustomSelect 
-              options={SEMESTERS}
-              value={semester}
-              onChange={setSemester}
+              options={FILTER_YEARS}
+              value={yearFilter}
+              onChange={setYearFilter}
               icon={FiBookOpen}
             />
           </div>
@@ -454,20 +450,27 @@ function Resources() {
       </div>
 
       {/* Folders View */}
-      {viewMode === 'folders' && !loading && (
-        <div className="folders-section">
-          <div className="folders-grid">
-            {folders.length === 0 ? (
-              <div className="empty-state" style={{ gridColumn: '1/-1' }}>
-                <div className="icon">📂</div>
-                <h3>No folders yet</h3>
-                <p>Folders will automatically appear here once resources are uploaded.</p>
-              </div>
-            ) : (
-              folders.map((folder, index) => (
-                <div 
-                  key={index} 
-                  className="glass-card folder-card"
+      {viewMode === 'folders' && !loading && (() => {
+        const filteredFolders = folders.filter(f => {
+          const matchSearch = search === '' || f.subject.toLowerCase().includes(search.toLowerCase()) || f.course.toLowerCase().includes(search.toLowerCase());
+          const matchYear = yearFilter === 'all' || Number(f.year) === Number(yearFilter);
+          return matchSearch && matchYear;
+        });
+
+        return (
+          <div className="folders-section">
+            <div className="folders-grid">
+              {filteredFolders.length === 0 ? (
+                <div className="empty-state" style={{ gridColumn: '1/-1' }}>
+                  <div className="icon">📂</div>
+                  <h3>No folders found</h3>
+                  <p>Try adjusting your search or year filter.</p>
+                </div>
+              ) : (
+                filteredFolders.map((folder, index) => (
+                  <div 
+                    key={index} 
+                    className="glass-card folder-card"
                   onClick={() => {
                     setSubject(folder.subject);
                     setActiveYear(Number(folder.year));
@@ -500,7 +503,8 @@ function Resources() {
             )}
           </div>
         </div>
-      )}
+      );
+    })()}
 
       {/* Content for All Resources */}
       {viewMode === 'all' && (

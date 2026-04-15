@@ -12,15 +12,19 @@ const { cloudinary, uploadRawToCloudinary } = require('../config/cloudinary');
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const { folderId, search, category, semester } = req.query;
+    const { folderId, search, category, semester, year } = req.query;
     let query = {};
 
     // 1. Strict mapping: if folderId is provided, show only those resources
     if (folderId) {
       query.folder = folderId;
     } else {
-      // Default view: Limit to user's year and below
-      query.year = { $lte: req.user.year };
+      // Default view: exact year if provided, otherwise limit to user's year and below
+      if (year) {
+        query.year = Number(year);
+      } else {
+        query.year = { $lte: req.user.year };
+      }
     }
 
     if (category) query.category = category;
