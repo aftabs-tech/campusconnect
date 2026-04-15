@@ -48,8 +48,8 @@ router.post('/signup', async (req, res) => {
 
     // Domain validation BEFORE everything else
     if (!validateEmailDomain(email)) {
-      return res.status(400).json({ 
-        message: `Only Somaiya email addresses (${ALLOWED_DOMAIN}) are allowed.` 
+      return res.status(400).json({
+        message: `Only Somaiya email addresses (${ALLOWED_DOMAIN}) are allowed.`
       });
     }
 
@@ -113,8 +113,8 @@ router.post('/login', async (req, res) => {
 
     // Domain validation to enforce restricted access
     if (!validateEmailDomain(email)) {
-      return res.status(400).json({ 
-        message: `Invalid email. Only ${ALLOWED_DOMAIN} addresses are permitted.` 
+      return res.status(400).json({
+        message: `Invalid email. Only ${ALLOWED_DOMAIN} addresses are permitted.`
       });
     }
 
@@ -177,7 +177,7 @@ router.post('/resend-otp', async (req, res) => {
     // Remove await to send email in background
     sendOTP(email, otp);
 
-    res.json({ 
+    res.json({
       message: 'OTP resent successfully!',
       otp: otp // SENDING OTP IN RESPONSE TO SOLVE YOUR PROBLEM IMMEDIATELY
     });
