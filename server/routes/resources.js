@@ -26,11 +26,20 @@ router.get('/', protect, async (req, res) => {
       query.$text = { $search: search };
     }
 
-    const resources = await Resource.find(query)
-      .populate('uploader', 'name avatar role college')
-      .sort({ createdAt: -1 });
-
     res.json(resources);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Get all allowed folders
+// @route   GET /api/resources/folders
+// @access  Private
+router.get('/folders', protect, async (req, res) => {
+  try {
+    const folders = await Folder.find({ year: { $lte: req.user.year } })
+      .sort({ year: 1, course: 1 });
+    res.json(folders);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
