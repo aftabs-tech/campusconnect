@@ -63,6 +63,7 @@ function Resources() {
   // Filters
   const [category, setCategory] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
+  const [semester, setSemester] = useState('all');
   const [search, setSearch] = useState('');
   const [subject, setSubject] = useState('');
   const [activeYear, setActiveYear] = useState('');
@@ -86,7 +87,7 @@ function Resources() {
   useEffect(() => {
     fetchResources();
     fetchFolders();
-  }, [category, yearFilter, search, subject, activeYear, activeCourse, activeFolderId, viewMode]);
+  }, [category, yearFilter, semester, search, subject, activeYear, activeCourse, activeFolderId, viewMode]);
 
   const handleDirectUpload = async (e) => {
     const selectedFile = e.target.files[0];
@@ -134,7 +135,9 @@ function Resources() {
     try {
       let query = [];
       if (category !== 'all') query.push(`category=${category}`);
-      if (yearFilter !== 'all') query.push(`year=${yearFilter}`);
+      if (semester !== 'all') query.push(`semester=${semester}`);
+      // if not inside a folder, apply yearFilter (if 'all' view without active folder)
+      if (yearFilter !== 'all' && !activeFolderId) query.push(`year=${yearFilter}`);
       if (search) query.push(`search=${search}`);
       if (subject) query.push(`subject=${subject}`);
       if (activeYear) query.push(`year=${activeYear}`);
@@ -429,7 +432,7 @@ function Resources() {
           <FiSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
-            placeholder="Search resources..." 
+            placeholder={viewMode === 'folders' ? "Search folders..." : "Search resources..."}
             className="input-field" 
             style={{ paddingLeft: 40 }}
             value={search}
@@ -437,16 +440,37 @@ function Resources() {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 12, flex: 1, maxWidth: '300px', marginLeft: 'auto' }}>
-          <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
-            <CustomSelect 
-              options={FILTER_YEARS}
-              value={yearFilter}
-              onChange={setYearFilter}
-              icon={FiBookOpen}
-            />
+        {viewMode === 'folders' ? (
+          <div style={{ display: 'flex', gap: 12, flex: 1, maxWidth: '300px', marginLeft: 'auto' }}>
+            <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
+              <CustomSelect 
+                options={FILTER_YEARS}
+                value={yearFilter}
+                onChange={setYearFilter}
+                icon={FiBookOpen}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 12, flex: 1 }}>
+            <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
+              <CustomSelect 
+                options={CATEGORIES}
+                value={category}
+                onChange={setCategory}
+                icon={FiLayers}
+              />
+            </div>
+            <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
+              <CustomSelect 
+                options={SEMESTERS}
+                value={semester}
+                onChange={setSemester}
+                icon={FiBookOpen}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Folders View */}
