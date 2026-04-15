@@ -543,9 +543,13 @@ function Resources() {
       {viewMode === 'all' && activeYear !== undefined && activeYear !== '' && Number(user?.year) === Number(activeYear) && !showForm && (
         <button 
           className={`fab-button ${uploading ? 'uploading' : ''}`}
-          onClick={() => fileInputRef.current.click()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileInputRef.current.click();
+          }}
           disabled={uploading}
-          title="Upload file directly to this folder"
+          title="Upload resource"
         >
           {uploading ? <div className="spinner spinner-xs"></div> : <FiPlus size={28} />}
         </button>
