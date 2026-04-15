@@ -47,12 +47,13 @@ const uploadToCloudinary = (fileBuffer, folder = 'campusconnect') => {
  */
 const uploadRawToCloudinary = (fileBuffer, originalName, folder = 'resources') => {
   return new Promise((resolve, reject) => {
+    const isPdf = originalName.toLowerCase().endsWith('.pdf');
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: 'auto',
+        resource_type: isPdf ? 'image' : 'auto',
         type: 'upload',
-        flags: 'attachment', // Force download headers on the server side
+        flags: 'attachment',
         public_id: `${Date.now()}-${originalName}`
       },
       (error, result) => {

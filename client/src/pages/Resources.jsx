@@ -193,16 +193,28 @@ function Resources() {
         r._id === resource._id ? { ...r, downloads: r.downloads + 1 } : r
       ));
 
-      // Open Cloudinary file with force-download flag (only for non-raw resources)
-      // Adding transformations to /raw/upload/ URLs causes 401 errors
-      const isRaw = resource.file.includes('/raw/upload/');
-      const downloadUrl = isRaw 
-        ? resource.file 
-        : resource.file.includes('?') 
-          ? `${resource.file}&fl_attachment=true` 
-          : `${resource.file}?fl_attachment=true`;
+      // Fetch file as blob and trigger download to bypass Cloudinary flag 401 errors
+      try {
+        const response = await fetch(resource.file);
+        if (!response.ok) throw new Error('Download failed');
         
-      window.open(downloadUrl, '_blank');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Use the original fileName or construct one
+        const fileName = (resource.title || 'resource') + (resource.file.toLowerCase().endsWith('.pdf') ? '.pdf' : '');
+        link.setAttribute('download', fileName);
+        
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        // Fallback: open in new tab if blob fetch fails (e.g. CORS)
+        window.open(resource.file, '_blank');
+      }
     } catch (err) {
       console.error('Download error:', err);
     }
