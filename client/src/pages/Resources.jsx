@@ -458,7 +458,7 @@ function Resources() {
                         <h3 className="resource-title">{res.title}</h3>
                       </div>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        {res.uploader?._id === user?._id && (
+                        {String(res.uploader?._id || res.uploader) === String(user?._id) && (
                           <button className="btn-icon danger" onClick={() => handleDelete(res._id)}>
                             <FiTrash2 />
                           </button>
