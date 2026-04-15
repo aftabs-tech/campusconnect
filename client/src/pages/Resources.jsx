@@ -392,7 +392,7 @@ function Resources() {
                   className="glass-card folder-card"
                   onClick={() => {
                     setSubject(folder.subject);
-                    setActiveYear(folder.year);
+                    setActiveYear(Number(folder.year));
                     setActiveCourse(folder.course);
                     setActiveFolderId(folder._id);
                     setViewMode('all');
@@ -493,22 +493,20 @@ function Resources() {
                     </button>
                   </div>
                 </div>
-              ))}
             </div>
-          )}
           )}
         </div>
       )}
 
       {/* Conditional Floating Action Button (FAB) */}
-      {viewMode === 'all' && activeYear && Number(user?.year) === Number(activeYear) && !showForm && (
+      {viewMode === 'all' && activeYear !== undefined && activeYear !== '' && Number(user?.year) === Number(activeYear) && !showForm && (
         <button 
           className="fab-button"
           onClick={() => {
             setForm({
               ...form,
               subject: subject || '',
-              year: activeYear || '',
+              year: Number(activeYear),
               course: activeCourse || ''
             });
             setShowForm(true);
