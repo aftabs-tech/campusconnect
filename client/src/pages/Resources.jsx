@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import API, { BASE_URL, getImageUrl } from '../api/axios';
 import { 
@@ -76,11 +76,44 @@ function Resources() {
   });
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchResources();
     fetchFolders();
   }, [category, semester, search, subject, activeYear, activeCourse, activeFolderId, viewMode]);
+
+  const handleDirectUpload = async (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      // Derive metadata from active folder state
+      formData.append('title', selectedFile.name.split('.')[0].replace(/[-_]/g, ' '));
+      formData.append('description', 'Direct upload');
+      formData.append('subject', subject);
+      formData.append('year', activeYear);
+      formData.append('course', activeCourse);
+      formData.append('semester', 1); // Default to Sem 1 for quick uploads
+      formData.append('category', 'notes');
+      formData.append('file', selectedFile);
+      formData.append('folderId', activeFolderId);
+
+      const { data } = await API.post('/resources', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setResources([data, ...resources]);
+    } catch (err) {
+      console.error('Direct upload failed:', err);
+      alert(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      e.target.value = null; // Reset for same file re-upload if needed
+    }
+  };
 
   const fetchFolders = async () => {
     try {
@@ -498,23 +531,23 @@ function Resources() {
         </div>
       )}
 
+      {/* Direct File Input for FAB */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        style={{ display: 'none' }} 
+        onChange={handleDirectUpload}
+      />
+
       {/* Conditional Floating Action Button (FAB) */}
       {viewMode === 'all' && activeYear !== undefined && activeYear !== '' && Number(user?.year) === Number(activeYear) && !showForm && (
         <button 
-          className="fab-button"
-          onClick={() => {
-            setForm({
-              ...form,
-              subject: subject || '',
-              year: Number(activeYear),
-              course: activeCourse || ''
-            });
-            setShowForm(true);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          title="Upload to this folder"
+          className={`fab-button ${uploading ? 'uploading' : ''}`}
+          onClick={() => fileInputRef.current.click()}
+          disabled={uploading}
+          title="Upload file directly to this folder"
         >
-          <FiPlus size={28} />
+          {uploading ? <div className="spinner spinner-xs"></div> : <FiPlus size={28} />}
         </button>
       )}
 
