@@ -40,6 +40,13 @@ const SEMESTERS = [
   { value: 8, label: 'Semester 8' }
 ];
 
+const YEARS = [
+  { value: 1, label: '1st Year' },
+  { value: 2, label: '2nd Year' },
+  { value: 3, label: '3rd Year' },
+  { value: 4, label: '4th Year' }
+];
+
 function Resources() {
   const { user } = useAuth();
   const [resources, setResources] = useState([]);
@@ -55,6 +62,7 @@ function Resources() {
   const [subject, setSubject] = useState('');
   const [activeYear, setActiveYear] = useState('');
   const [activeCourse, setActiveCourse] = useState('');
+  const [activeFolderId, setActiveFolderId] = useState('');
 
   // Form State
   const [form, setForm] = useState({
@@ -72,7 +80,7 @@ function Resources() {
   useEffect(() => {
     fetchResources();
     fetchFolders();
-  }, [category, semester, search, subject, activeYear, activeCourse, viewMode]);
+  }, [category, semester, search, subject, activeYear, activeCourse, activeFolderId, viewMode]);
 
   const fetchFolders = async () => {
     try {
@@ -93,6 +101,7 @@ function Resources() {
       if (subject) query.push(`subject=${subject}`);
       if (activeYear) query.push(`year=${activeYear}`);
       if (activeCourse) query.push(`course=${activeCourse}`);
+      if (activeFolderId) query.push(`folderId=${activeFolderId}`);
       
       const queryString = query.length > 0 ? `?${query.join('&')}` : '';
       const { data } = await API.get(`/resources${queryString}`);
@@ -123,6 +132,7 @@ function Resources() {
       formData.append('semester', form.semester);
       formData.append('category', form.category);
       formData.append('file', file);
+      if (activeFolderId) formData.append('folderId', activeFolderId);
 
       const { data } = await API.post('/resources', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -220,7 +230,7 @@ function Resources() {
               setForm({
                 ...form,
                 subject: subject || '',
-                year: activeYear || '',
+                year: activeYear || 1,
                 course: activeCourse || ''
               });
             }
@@ -261,13 +271,10 @@ function Resources() {
 
             <div className="input-group">
               <label>Year</label>
-              <input 
-                type="text" 
-                className="input-field" 
-                placeholder="e.g. 2024"
-                value={form.year}
-                onChange={(e) => setForm({ ...form, year: e.target.value })}
-                required
+              <CustomSelect 
+                options={YEARS}
+                value={Number(form.year)}
+                onChange={(val) => setForm({ ...form, year: val })}
               />
             </div>
 
@@ -405,6 +412,7 @@ function Resources() {
                     setSubject(folder.subject);
                     setActiveYear(folder.year);
                     setActiveCourse(folder.course);
+                    setActiveFolderId(folder._id);
                     setViewMode('all');
                   }}
                 >
@@ -437,6 +445,7 @@ function Resources() {
                 setSubject('');
                 setActiveYear('');
                 setActiveCourse('');
+                setActiveFolderId('');
               }}><FiX /> Clear</button>
             </div>
           )}

@@ -11,9 +11,10 @@ const { cloudinary, uploadRawToCloudinary } = require('../config/cloudinary');
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const { subject, semester, category, search } = req.query;
+    const { subject, semester, category, search, folderId } = req.query;
     let query = {};
 
+    if (folderId) query.folder = folderId;
     if (subject) query.subject = { $regex: subject, $options: 'i' };
     if (semester) query.semester = semester;
     if (category) query.category = category;
@@ -50,8 +51,13 @@ router.get('/folders', protect, async (req, res) => {
 // @access  Private
 router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
   try {
-    const { title, description, subject, year, course, semester, category } = req.body;
+    const { title, description, subject, year, course, semester, category, folderId } = req.body;
     
+    // Validation
+    if (!title || !subject || !year || !course || !semester) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
     // Check if user is uploading to their own year
     if (Number(year) !== req.user.year) {
       return res.status(403).json({ message: `You can only upload resources for your own year (Year ${req.user.year})` });
@@ -68,22 +74,27 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
 
     // 2. Upload file to Cloudinary first
     console.log(`Uploading file ${req.file.originalname} to Cloudinary...`);
-    const { url, public_id, secure_url } = await uploadRawToCloudinary(
+    const { url, secure_url } = await uploadRawToCloudinary(
       req.file.buffer,
       req.file.originalname,
       'campusconnect/resources'
     );
     
-    // Cloudinary secure_url is the preferred storage path
     const storageUrl = secure_url || url;
-    console.log(`File stored successfully at: ${storageUrl}`);
 
     // 3. Find or Create Folder only if upload was successful
-    let folder = await Folder.findOne({ 
-      year: Number(year), 
-      course: course.trim(), 
-      subject: subject.trim() 
-    });
+    let folder;
+    if (folderId) {
+      folder = await Folder.findById(folderId);
+    } 
+    
+    if (!folder) {
+      folder = await Folder.findOne({ 
+        year: Number(year), 
+        course: course.trim(), 
+        subject: subject.trim() 
+      });
+    }
     
     if (!folder) {
       folder = await Folder.create({ 
@@ -91,24 +102,22 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
         course: course.trim(), 
         subject: subject.trim() 
       });
-      console.log(`New folder created: ${course} - ${subject}`);
-    } else {
-      console.log(`Reusing existing folder ID: ${folder._id}`);
     }
 
-    // 4. Create local Resource record
+    // 4. Create local Resource record referencing the folder
     const resource = await Resource.create({
       title,
       description,
-      subject,
-      year: Number(year),
-      course,
+      subject: folder.subject,
+      year: folder.year,
+      course: folder.course,
       semester,
       category,
       file: storageUrl,
       fileName: req.file.originalname,
       fileSize: req.file.size,
-      uploader: req.user._id
+      uploader: req.user._id,
+      folder: folder._id
     });
 
     const populated = await resource.populate('uploader', 'name avatar role college');

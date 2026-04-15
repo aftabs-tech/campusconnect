@@ -51,6 +51,11 @@ const resourceSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  folder: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Folder',
+    required: true
+  },
   downloads: {
     type: Number,
     default: 0
