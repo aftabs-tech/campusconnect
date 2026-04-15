@@ -43,6 +43,10 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
   try {
     const { title, description, subject, year, course, semester, category } = req.body;
     
+    // Check if user is uploading to their own year
+    if (Number(year) !== req.user.year) {
+      return res.status(403).json({ message: `You can only upload resources for your own year (Year ${req.user.year})` });
+    }
     if (!req.file) {
       return res.status(400).json({ message: 'Please upload a file' });
     }
