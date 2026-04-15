@@ -50,7 +50,7 @@ const uploadRawToCloudinary = (fileBuffer, originalName, folder = 'resources') =
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: 'auto', // Correctly handles diverse file types
+        resource_type: 'raw', // Force raw for all document types (PDF, DOC, etc.)
         public_id: `${Date.now()}-${originalName}`
       },
       (error, result) => {
