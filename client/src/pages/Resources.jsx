@@ -526,6 +526,7 @@ function Resources() {
                     </button>
                   </div>
                 </div>
+              ))}
             </div>
           )}
         </div>
