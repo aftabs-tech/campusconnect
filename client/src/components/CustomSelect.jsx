@@ -90,12 +90,13 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon }) => 
           top: calc(100% + 8px);
           left: 0;
           right: 0;
-          z-index: 1000;
+          z-index: 9999; /* Maximize z-index */
           max-height: 300px;
           overflow-y: auto;
-          background: #1A1A2E;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          background: #1A1A2E; /* Opaque background */
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+          border-radius: 12px;
           animation: slideDown 0.2s ease-out;
         }
         @keyframes slideDown {
@@ -106,11 +107,12 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon }) => 
           padding: 12px 16px;
           cursor: pointer;
           transition: all 0.2s ease;
-          color: #A0A0B8;
+          color: #FFFFFF; /* High contrast text */
+          opacity: 1 !important; /* Force full opacity */
         }
         .custom-select-option:hover {
-          background: rgba(108, 99, 255, 0.1);
-          color: #EAEAEA;
+          background: rgba(108, 99, 255, 0.2);
+          color: #FFFFFF;
         }
         .custom-select-option.selected {
           background: #6C63FF;

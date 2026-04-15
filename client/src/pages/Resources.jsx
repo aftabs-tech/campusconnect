@@ -338,13 +338,26 @@ function Resources() {
         </form>
       )}
 
-      {/* Filter Bar */}
-      <div className="resource-filters" style={{ padding: 16, marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', position: 'relative', zIndex: 10, overflow: 'visible' }}>
+      {/* Consolidated Filter Bar */}
+      <div className="resource-filters" style={{ 
+        padding: 16, 
+        marginBottom: 24, 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: 16, 
+        alignItems: 'center', 
+        background: 'var(--bg-card)', 
+        border: '1px solid var(--border)', 
+        borderRadius: 'var(--radius-lg)', 
+        position: 'relative', 
+        zIndex: 100, // Elevated z-index for dropdowns
+        overflow: 'visible' 
+      }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
           <FiSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
-            placeholder="Search by title..." 
+            placeholder="Search resources..." 
             className="input-field" 
             style={{ paddingLeft: 40 }}
             value={search}
@@ -372,44 +385,6 @@ function Resources() {
           </div>
         </div>
       </div>
-
-
-      {/* Filter Bar */}
-      {viewMode === 'all' && (
-        <div className="resource-filters" style={{ padding: 16, marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', position: 'relative', zIndex: 10, overflow: 'visible' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-            <FiSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              placeholder="Search by title..." 
-              className="input-field" 
-              style={{ paddingLeft: 40 }}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: 12, flex: 1 }}>
-            <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
-              <CustomSelect 
-                options={CATEGORIES}
-                value={category}
-                onChange={setCategory}
-                icon={FiLayers}
-              />
-            </div>
-
-            <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
-              <CustomSelect 
-                options={SEMESTERS}
-                value={semester}
-                onChange={setSemester}
-                icon={FiBookOpen}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Folders View */}
       {viewMode === 'folders' && !loading && (
@@ -530,7 +505,28 @@ function Resources() {
               ))}
             </div>
           )}
+          )}
         </div>
+      )}
+
+      {/* Conditional Floating Action Button (FAB) */}
+      {viewMode === 'all' && activeYear && Number(user?.year) === Number(activeYear) && !showForm && (
+        <button 
+          className="fab-button"
+          onClick={() => {
+            setForm({
+              ...form,
+              subject: subject || '',
+              year: activeYear || '',
+              course: activeCourse || ''
+            });
+            setShowForm(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          title="Upload to this folder"
+        >
+          <FiPlus size={28} />
+        </button>
       )}
 
       <style jsx="true">{`
@@ -737,6 +733,31 @@ function Resources() {
           display: flex;
           cursor: pointer;
           padding: 2px;
+        }
+        .fab-button {
+          position: fixed;
+          bottom: 40px;
+          right: 40px;
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background: var(--gradient-primary);
+          color: white;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 32px rgba(var(--primary-rgb), 0.4);
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          z-index: 1000;
+        }
+        .fab-button:hover {
+          transform: scale(1.1) rotate(90deg);
+          box-shadow: 0 12px 40px rgba(var(--primary-rgb), 0.6);
+        }
+        .fab-button:active {
+          transform: scale(0.95);
         }
       `}</style>
     </div>
