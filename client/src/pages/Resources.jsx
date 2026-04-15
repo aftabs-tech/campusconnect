@@ -193,26 +193,32 @@ function Resources() {
         r._id === resource._id ? { ...r, downloads: r.downloads + 1 } : r
       ));
 
-      // Fetch file as blob and trigger download to bypass Cloudinary flag 401 errors
+      // Fetch file securely via backend proxy to bypass any Cloudinary or CORS restrictions
       try {
-        const response = await fetch(resource.file);
-        if (!response.ok) throw new Error('Download failed');
+        const response = await API.get(`/resources/${resource._id}/download-file`, {
+          responseType: 'blob'
+        });
         
-        const blob = await response.blob();
+        const blob = new Blob([response.data], { type: response.headers['content-type'] });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         
-        // Use the original fileName or construct one
-        const fileName = (resource.title || 'resource') + (resource.file.toLowerCase().endsWith('.pdf') ? '.pdf' : '');
-        link.setAttribute('download', fileName);
+        let fileName = 'resource.pdf'; // Fallback
+        const contentDisposition = response.headers['content-disposition'];
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          fileName = contentDisposition.split('filename=')[1].replace(/["']/g, '');
+        } else {
+          fileName = (resource.title || 'resource') + (resource.file.toLowerCase().endsWith('.pdf') ? '.pdf' : '');
+        }
         
+        link.setAttribute('download', fileName);
         document.body.appendChild(link);
         link.click();
         link.remove();
         window.URL.revokeObjectURL(url);
       } catch (err) {
-        // Fallback: open in new tab if blob fetch fails (e.g. CORS)
+        console.error('File stream failed, falling back to direct link:', err);
         window.open(resource.file, '_blank');
       }
     } catch (err) {

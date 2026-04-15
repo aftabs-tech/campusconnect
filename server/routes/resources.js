@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const https = require('https');
 const Resource = require('../models/Resource');
 const Folder = require('../models/Folder');
 const { protect } = require('../middleware/auth');
@@ -149,6 +150,43 @@ router.patch('/:id/download', protect, async (req, res) => {
     );
     if (!resource) return res.status(404).json({ message: 'Resource not found' });
     res.json({ downloads: resource.downloads });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Download resource file (Proxy to bypass cloud restrictions)
+// @route   GET /api/resources/:id/download-file
+// @access  Private
+router.get('/:id/download-file', protect, async (req, res) => {
+  try {
+    const resource = await Resource.findById(req.params.id);
+    if (!resource) return res.status(404).json({ message: 'Resource not found' });
+
+    let fileUrl = resource.file;
+    // Replace any transformation flags which might cause 401s on backend
+    if (fileUrl.includes('?fl_attachment')) {
+      fileUrl = fileUrl.split('?')[0];
+    }
+
+    https.get(fileUrl, (remoteRes) => {
+      if (remoteRes.statusCode >= 400) {
+        return res.status(remoteRes.statusCode).json({ message: 'Cloud storage rejected the request' });
+      }
+
+      let fileName = String(resource.title || 'resource').replace(/[^a-zA-Z0-9.\-_ ]/g, '_');
+      if (fileUrl.toLowerCase().endsWith('.pdf') && !fileName.toLowerCase().endsWith('.pdf')) {
+        fileName += '.pdf';
+      }
+
+      res.setHeader('Content-Type', remoteRes.headers['content-type'] || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      
+      remoteRes.pipe(res);
+    }).on('error', (err) => {
+      console.error('Proxy download error:', err);
+      res.status(500).json({ message: 'Failed to stream the file' });
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
