@@ -73,14 +73,15 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
     }
 
     // 2. Upload file to Cloudinary first
-    console.log(`Uploading file ${req.file.originalname} to Cloudinary...`);
+    console.log(`Uploading resource ${req.file.originalname} to 'resources' folder...`);
     const { url, secure_url } = await uploadRawToCloudinary(
       req.file.buffer,
       req.file.originalname,
-      'campusconnect/resources'
+      'resources'
     );
     
     const storageUrl = secure_url || url;
+    console.log(`Resource uploaded successfully: ${storageUrl}`);
 
     // 3. Find or Create Folder only if upload was successful
     let folder;

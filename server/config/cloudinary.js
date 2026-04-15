@@ -43,12 +43,12 @@ const uploadToCloudinary = (fileBuffer, folder = 'campusconnect') => {
  * @param {string} folder - The Cloudinary folder
  * @returns {Promise<{url: string, publicId: string}>} - The secure URL and public ID
  */
-const uploadRawToCloudinary = (fileBuffer, originalName, folder = 'campusconnect/resources') => {
+const uploadRawToCloudinary = (fileBuffer, originalName, folder = 'resources') => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: 'raw',
+        resource_type: 'auto', // Correctly handles diverse file types
         public_id: `${Date.now()}-${originalName}`
       },
       (error, result) => {
