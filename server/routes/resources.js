@@ -18,6 +18,9 @@ router.get('/', protect, async (req, res) => {
     if (semester) query.semester = semester;
     if (category) query.category = category;
     
+    // Access control: User can see resources from their year and below
+    query.year = { $lte: req.user.year };
+    
     if (search) {
       // Use text index search
       query.$text = { $search: search };

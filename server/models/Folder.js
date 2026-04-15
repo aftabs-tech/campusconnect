@@ -2,9 +2,8 @@ const mongoose = require('mongoose');
 
 const folderSchema = new mongoose.Schema({
   year: {
-    type: String,
-    required: [true, 'Year is required'],
-    trim: true
+    type: Number,
+    required: [true, 'Year is required']
   },
   course: {
     type: String,

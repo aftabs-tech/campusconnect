@@ -28,7 +28,7 @@ const resourceSchema = new mongoose.Schema({
     required: [true, 'Subject is required']
   },
   year: {
-    type: String,
+    type: Number,
     required: [true, 'Year is required']
   },
   course: {
