@@ -27,6 +27,14 @@ const resourceSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Subject is required']
   },
+  year: {
+    type: String,
+    required: [true, 'Year is required']
+  },
+  course: {
+    type: String,
+    required: [true, 'Course is required']
+  },
   semester: {
     type: Number,
     min: 1,

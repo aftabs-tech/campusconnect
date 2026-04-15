@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Resource = require('../models/Resource');
+const Folder = require('../models/Folder');
 const { protect } = require('../middleware/auth');
 const resourceUpload = require('../middleware/resourceUpload');
 const { cloudinary, uploadRawToCloudinary } = require('../config/cloudinary');
@@ -37,10 +38,16 @@ router.get('/', protect, async (req, res) => {
 // @access  Private
 router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
   try {
-    const { title, description, subject, semester, category } = req.body;
+    const { title, description, subject, year, course, semester, category } = req.body;
     
     if (!req.file) {
       return res.status(400).json({ message: 'Please upload a file' });
+    }
+
+    // Check if folder exists, if not create it
+    let folder = await Folder.findOne({ year, course, subject });
+    if (!folder) {
+      folder = await Folder.create({ year, course, subject });
     }
 
     // Upload file to Cloudinary for persistent storage
@@ -54,6 +61,8 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
       title,
       description,
       subject,
+      year,
+      course,
       semester,
       category,
       file: url,

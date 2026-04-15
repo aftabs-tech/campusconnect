@@ -55,6 +55,8 @@ function Resources() {
     title: '',
     description: '',
     subject: '',
+    year: '',
+    course: '',
     semester: 1,
     category: 'notes'
   });
@@ -98,6 +100,8 @@ function Resources() {
       formData.append('title', form.title);
       formData.append('description', form.description);
       formData.append('subject', form.subject);
+      formData.append('year', form.year);
+      formData.append('course', form.course);
       formData.append('semester', form.semester);
       formData.append('category', form.category);
       formData.append('file', file);
@@ -108,7 +112,7 @@ function Resources() {
       
       setResources([data, ...resources]);
       setShowForm(false);
-      setForm({ title: '', description: '', subject: '', semester: 1, category: 'notes' });
+      setForm({ title: '', description: '', subject: '', year: '', course: '', semester: 1, category: 'notes' });
       setFile(null);
     } catch (err) {
       console.error('Upload failed:', err);
@@ -207,6 +211,30 @@ function Resources() {
                 placeholder="e.g. Computer Science"
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="input-group">
+              <label>Year</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="e.g. 2024"
+                value={form.year}
+                onChange={(e) => setForm({ ...form, year: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="input-group">
+              <label>Course</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="e.g. B.Tech"
+                value={form.course}
+                onChange={(e) => setForm({ ...form, course: e.target.value })}
                 required
               />
             </div>
