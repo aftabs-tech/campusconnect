@@ -53,6 +53,8 @@ function Resources() {
   const [semester, setSemester] = useState('all');
   const [search, setSearch] = useState('');
   const [subject, setSubject] = useState('');
+  const [activeYear, setActiveYear] = useState('');
+  const [activeCourse, setActiveCourse] = useState('');
 
   // Form State
   const [form, setForm] = useState({
@@ -70,7 +72,7 @@ function Resources() {
   useEffect(() => {
     fetchResources();
     fetchFolders();
-  }, [category, semester, search, subject, viewMode]);
+  }, [category, semester, search, subject, activeYear, activeCourse, viewMode]);
 
   const fetchFolders = async () => {
     try {
@@ -89,6 +91,8 @@ function Resources() {
       if (semester !== 'all') query.push(`semester=${semester}`);
       if (search) query.push(`search=${search}`);
       if (subject) query.push(`subject=${subject}`);
+      if (activeYear) query.push(`year=${activeYear}`);
+      if (activeCourse) query.push(`course=${activeCourse}`);
       
       const queryString = query.length > 0 ? `?${query.join('&')}` : '';
       const { data } = await API.get(`/resources${queryString}`);
@@ -211,7 +215,17 @@ function Resources() {
               <FiLayers /> All Resources
             </button>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+          <button className="btn btn-primary" onClick={() => {
+            if (!showForm && (subject || activeYear || activeCourse)) {
+              setForm({
+                ...form,
+                subject: subject || '',
+                year: activeYear || '',
+                course: activeCourse || ''
+              });
+            }
+            setShowForm(!showForm);
+          }}>
             {showForm ? <><FiX /> Cancel</> : <><FiPlus /> Upload Resource</>}
           </button>
         </div>
@@ -414,6 +428,8 @@ function Resources() {
                   className="glass-card folder-card"
                   onClick={() => {
                     setSubject(folder.subject);
+                    setActiveYear(folder.year);
+                    setActiveCourse(folder.course);
                     setViewMode('all');
                   }}
                 >
@@ -437,10 +453,16 @@ function Resources() {
       {/* Content for All Resources */}
       {viewMode === 'all' && (
         <div className="resources-list-section">
-          {subject && (
+          {(subject || activeYear || activeCourse) && (
             <div className="active-filter-chip">
-              <span>Showing: <strong>{subject}</strong></span>
-              <button onClick={() => setSubject('')}><FiX /></button>
+              <span>
+                Browsing: <strong>{activeYear && `Year ${activeYear} `}{activeCourse && `${activeCourse} `}{subject}</strong>
+              </span>
+              <button onClick={() => {
+                setSubject('');
+                setActiveYear('');
+                setActiveCourse('');
+              }}><FiX /> Clear</button>
             </div>
           )}
           

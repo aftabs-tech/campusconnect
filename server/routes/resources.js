@@ -60,28 +60,52 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
       return res.status(400).json({ message: 'Please upload a file' });
     }
 
-    // Check if folder exists, if not create it
-    let folder = await Folder.findOne({ year, course, subject });
-    if (!folder) {
-      folder = await Folder.create({ year, course, subject });
+    // 1. File Size Validation (10MB)
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (req.file.size > MAX_SIZE) {
+      return res.status(400).json({ message: 'File size should be less than 10MB' });
     }
 
-    // Upload file to Cloudinary for persistent storage
-    const { url } = await uploadRawToCloudinary(
+    // 2. Upload file to Cloudinary first
+    console.log(`Uploading file ${req.file.originalname} to Cloudinary...`);
+    const { url, public_id, secure_url } = await uploadRawToCloudinary(
       req.file.buffer,
       req.file.originalname,
       'campusconnect/resources'
     );
+    
+    // Cloudinary secure_url is the preferred storage path
+    const storageUrl = secure_url || url;
+    console.log(`File stored successfully at: ${storageUrl}`);
 
+    // 3. Find or Create Folder only if upload was successful
+    let folder = await Folder.findOne({ 
+      year: Number(year), 
+      course: course.trim(), 
+      subject: subject.trim() 
+    });
+    
+    if (!folder) {
+      folder = await Folder.create({ 
+        year: Number(year), 
+        course: course.trim(), 
+        subject: subject.trim() 
+      });
+      console.log(`New folder created: ${course} - ${subject}`);
+    } else {
+      console.log(`Reusing existing folder ID: ${folder._id}`);
+    }
+
+    // 4. Create local Resource record
     const resource = await Resource.create({
       title,
       description,
       subject,
-      year,
+      year: Number(year),
       course,
       semester,
       category,
-      file: url,
+      file: storageUrl,
       fileName: req.file.originalname,
       fileSize: req.file.size,
       uploader: req.user._id
