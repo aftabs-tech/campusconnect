@@ -11,22 +11,29 @@ const { cloudinary, uploadRawToCloudinary } = require('../config/cloudinary');
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const { subject, semester, category, search, folderId } = req.query;
+    const { folderId, search, category, semester } = req.query;
     let query = {};
 
-    if (folderId) query.folder = folderId;
-    if (subject) query.subject = { $regex: subject, $options: 'i' };
-    if (semester) query.semester = semester;
+    // 1. Strict mapping: if folderId is provided, show only those resources
+    if (folderId) {
+      query.folder = folderId;
+    } else {
+      // Default view: Limit to user's year and below
+      query.year = { $lte: req.user.year };
+    }
+
     if (category) query.category = category;
-    
-    // Access control: User can see resources from their year and below
-    query.year = { $lte: req.user.year };
+    if (semester) query.semester = semester;
     
     if (search) {
-      // Use text index search
       query.$text = { $search: search };
     }
 
+    console.log(`Fetching resources with query:`, JSON.stringify(query));
+    const resources = await Resource.find(query)
+      .populate('uploader', 'name avatar role college')
+      .sort({ createdAt: -1 });
+    
     res.json(resources);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -110,9 +117,9 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
       title,
       description,
       subject: folder.subject,
-      year: folder.year,
+      year: Number(folder.year), // Explicit numeric year from folder
       course: folder.course,
-      semester,
+      semester: Number(semester),
       category,
       file: storageUrl,
       fileName: req.file.originalname,
@@ -120,6 +127,8 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
       uploader: req.user._id,
       folder: folder._id
     });
+
+    console.log(`Resource saved to DB: ${resource.title} (ID: ${resource._id}) in Folder: ${folder.subject}`);
 
     const populated = await resource.populate('uploader', 'name avatar role college');
     res.status(201).json(populated);

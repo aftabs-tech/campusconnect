@@ -6,6 +6,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+const streamifier = require('streamifier');
+
 /**
  * Upload a file buffer to Cloudinary (images)
  * @param {Buffer} fileBuffer - The file buffer from multer memoryStorage
@@ -32,7 +34,7 @@ const uploadToCloudinary = (fileBuffer, folder = 'campusconnect') => {
         }
       }
     );
-    stream.end(fileBuffer);
+    streamifier.createReadStream(fileBuffer).pipe(stream);
   });
 };
 
@@ -62,7 +64,7 @@ const uploadRawToCloudinary = (fileBuffer, originalName, folder = 'resources') =
         }
       }
     );
-    stream.end(fileBuffer);
+    streamifier.createReadStream(fileBuffer).pipe(stream);
   });
 };
 
