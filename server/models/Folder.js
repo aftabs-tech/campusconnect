@@ -14,6 +14,11 @@ const folderSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Subject is required'],
     trim: true
+  },
+  semester: {
+    type: Number,
+    required: [true, 'Semester is required'],
+    default: 1
   }
 }, {
   timestamps: true

@@ -109,18 +109,20 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
       folder = await Folder.create({ 
         year: Number(year), 
         course: course.trim(), 
-        subject: subject.trim() 
+        subject: subject.trim(),
+        semester: Number(semester) || 1
       });
     }
 
     // 4. Create local Resource record referencing the folder
+    // Enforce data consistency: The folder is the source of truth
     const resource = await Resource.create({
       title,
       description,
       subject: folder.subject,
-      year: Number(folder.year), // Explicit numeric year from folder
+      year: Number(folder.year),
       course: folder.course,
-      semester: Number(semester),
+      semester: Number(folder.semester), // Force semester from folder, ignore request body
       category,
       file: storageUrl,
       fileName: req.file.originalname,
