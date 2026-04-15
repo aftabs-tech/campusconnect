@@ -219,7 +219,9 @@ function Resources() {
         window.URL.revokeObjectURL(url);
       } catch (err) {
         console.error('File stream failed, falling back to direct link:', err);
-        window.open(resource.file, '_blank');
+        // Ensure no transformation flags crash the 'raw' Cloudinary links
+        const cleanUrl = resource.file.split('?')[0]; 
+        window.open(cleanUrl, '_blank');
       }
     } catch (err) {
       console.error('Download error:', err);

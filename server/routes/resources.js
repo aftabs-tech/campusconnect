@@ -172,24 +172,23 @@ router.get('/:id/download-file', protect, async (req, res) => {
       fileUrl = fileUrl.split('?')[0];
     }
 
-    https.get(fileUrl, (remoteRes) => {
-      if (remoteRes.statusCode >= 400) {
-        return res.status(remoteRes.statusCode).json({ message: 'Cloud storage rejected the request' });
-      }
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      console.error('Cloudinary fetch failed:', response.status, response.statusText);
+      return res.status(response.status).json({ message: 'Cloud storage rejected the request' });
+    }
 
-      let fileName = String(resource.title || 'resource').replace(/[^a-zA-Z0-9.\-_ ]/g, '_');
-      if (fileUrl.toLowerCase().endsWith('.pdf') && !fileName.toLowerCase().endsWith('.pdf')) {
-        fileName += '.pdf';
-      }
+    let fileName = String(resource.title || 'resource').replace(/[^a-zA-Z0-9.\-_ ]/g, '_');
+    if (fileUrl.toLowerCase().endsWith('.pdf') && !fileName.toLowerCase().endsWith('.pdf')) {
+      fileName += '.pdf';
+    }
 
-      res.setHeader('Content-Type', remoteRes.headers['content-type'] || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-      
-      remoteRes.pipe(res);
-    }).on('error', (err) => {
-      console.error('Proxy download error:', err);
-      res.status(500).json({ message: 'Failed to stream the file' });
-    });
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    const { Readable } = require('stream');
+    const nodeStream = Readable.fromWeb(response.body);
+    nodeStream.pipe(res);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
