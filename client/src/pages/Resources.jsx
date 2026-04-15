@@ -160,26 +160,8 @@ function Resources() {
         r._id === resource._id ? { ...r, downloads: r.downloads + 1 } : r
       ));
 
-      // Build the full download URL
-      const downloadUrl = `${BASE_URL}${resource.file}`;
-
-      // Fetch file as blob and trigger download
-      try {
-        const response = await fetch(downloadUrl);
-        if (!response.ok) throw new Error('File not found');
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = resource.fileName || resource.title;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      } catch {
-        // Fallback: open in new tab
-        window.open(downloadUrl, '_blank');
-      }
+      // Open Cloudinary file directly in a new tab
+      window.open(resource.file, '_blank');
     } catch (err) {
       console.error('Download error:', err);
     }
