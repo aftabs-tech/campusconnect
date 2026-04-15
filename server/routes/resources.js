@@ -110,7 +110,8 @@ router.post('/', protect, resourceUpload.single('file'), async (req, res) => {
         year: Number(year), 
         course: course.trim(), 
         subject: subject.trim(),
-        semester: Number(semester) || 1
+        semester: Number(semester) || 1,
+        createdBy: req.user._id
       });
     }
 
@@ -209,6 +210,29 @@ router.delete('/:id', protect, async (req, res) => {
 
     await resource.deleteOne();
     res.json({ message: 'Resource deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Delete a folder and all its resources
+// @route   DELETE /api/resources/folders/:id
+// @access  Private
+router.delete('/folders/:id', protect, async (req, res) => {
+  try {
+    const folder = await Folder.findById(req.params.id);
+    if (!folder) return res.status(404).json({ message: 'Folder not found' });
+
+    // Check if user is the creator or admin
+    if (String(folder.createdBy) !== String(req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to delete this folder' });
+    }
+
+    // Cascade delete all resources in this folder
+    await Resource.deleteMany({ folder: folder._id });
+    await folder.deleteOne();
+
+    res.json({ message: 'Folder and all its resources deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

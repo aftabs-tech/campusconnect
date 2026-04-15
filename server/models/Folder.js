@@ -19,6 +19,10 @@ const folderSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Semester is required'],
     default: 1
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true

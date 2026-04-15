@@ -236,6 +236,23 @@ function Resources() {
     }
   };
 
+  const handleDeleteFolder = async (e, id) => {
+    e.stopPropagation(); // Prevents opening the folder
+    if (!window.confirm('Are you sure you want to delete this folder AND all its resources? This cannot be undone.')) return;
+    try {
+      await API.delete(`/resources/folders/${id}`);
+      setFolders(folders.filter(f => f._id !== id));
+      // If we were inside the folder, clear the active folder view
+      if (activeFolderId === id) {
+        setActiveFolderId('');
+        setViewMode('folders');
+      }
+    } catch (err) {
+      console.error('Folder delete error:', err);
+      alert(err.response?.data?.message || 'Failed to delete folder');
+    }
+  };
+
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -464,8 +481,17 @@ function Resources() {
                     <span className="folder-year">Year {folder.year} • {folder.course}</span>
                     <h3 className="folder-name">{folder.subject}</h3>
                   </div>
-                  <div className="folder-arrow">
-                    <FiChevronDown style={{ transform: 'rotate(-90deg)' }} />
+                  <div className="folder-action">
+                    {String(folder.createdBy) === String(user?._id) && (
+                      <button 
+                        className="btn-icon danger" 
+                        onClick={(e) => handleDeleteFolder(e, folder._id)}
+                        style={{ marginRight: 8 }}
+                      >
+                        <FiTrash2 />
+                      </button>
+                    )}
+                    <FiChevronDown style={{ transform: 'rotate(-90deg)', color: 'var(--text-muted)' }} />
                   </div>
                 </div>
               ))
@@ -765,7 +791,9 @@ function Resources() {
           margin: 0;
           color: var(--text-primary);
         }
-        .folder-arrow {
+        .folder-action {
+          display: flex;
+          align-items: center;
           color: var(--text-muted);
         }
         .active-filter-chip {
