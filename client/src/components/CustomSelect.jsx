@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { FiChevronDown } from 'react-icons/fi';
 
-const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon }) => {
+const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const selectedOption = options.find(opt => opt.value === value) || options[0];
+  const selectedOption = options.find(opt => opt.value === value);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -18,14 +18,14 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon }) => 
   }, []);
 
   return (
-    <div className="custom-select-container" ref={dropdownRef}>
+    <div className={`custom-select-container ${disabled ? 'disabled' : ''}`} ref={dropdownRef}>
       <div 
-        className={`custom-select-trigger ${isOpen ? 'open' : ''}`} 
-        onClick={() => setIsOpen(!isOpen)}
+        className={`custom-select-trigger ${isOpen ? 'open' : ''} ${!selectedOption ? 'placeholder' : ''} ${disabled ? 'disabled' : ''}`} 
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <div className="trigger-content">
           {Icon && <Icon className="trigger-icon" />}
-          <span>{selectedOption ? selectedOption.label : placeholder}</span>
+          <span>{selectedOption ? selectedOption.label : (placeholder || 'Select option')}</span>
         </div>
         <FiChevronDown className={`chevron ${isOpen ? 'rotate' : ''}`} />
       </div>
@@ -58,16 +58,29 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon }) => 
           align-items: center;
           justify-content: space-between;
           padding: 10px 16px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--bg-glass);
+          border: 1px solid var(--border);
           border-radius: 12px;
           cursor: pointer;
           transition: all 0.3s ease;
-          color: #EAEAEA;
+          color: var(--text-muted);
           font-size: 14px;
         }
-        .custom-select-trigger:hover, .custom-select-trigger.open {
-          border-color: #6C63FF;
+        .custom-select-trigger.placeholder {
+          color: var(--text-secondary);
+        }
+        .custom-select-trigger.placeholder .trigger-icon,
+        .custom-select-trigger.placeholder .chevron {
+          color: var(--text-secondary);
+        }
+        .custom-select-trigger.disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          background: rgba(0, 0, 0, 0.05);
+          filter: grayscale(1);
+        }
+        .custom-select-trigger:not(.disabled):hover, .custom-select-trigger:not(.disabled).open {
+          border-color: var(--primary);
           background: rgba(108, 99, 255, 0.05);
         }
         .trigger-content {
@@ -76,10 +89,10 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon }) => 
           gap: 10px;
         }
         .trigger-icon {
-          color: #A0A0B8;
+          color: var(--text-muted);
         }
         .chevron {
-          color: #A0A0B8;
+          color: var(--text-muted);
           transition: transform 0.3s ease;
         }
         .chevron.rotate {
@@ -90,12 +103,12 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon }) => 
           top: calc(100% + 8px);
           left: 0;
           right: 0;
-          z-index: 9999; /* Maximize z-index */
+          z-index: 9999;
           max-height: 300px;
           overflow-y: auto;
-          background: #1A1A2E; /* Opaque background */
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
+          box-shadow: var(--shadow-lg);
           border-radius: 12px;
           animation: slideDown 0.2s ease-out;
         }
@@ -107,23 +120,26 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon: Icon }) => 
           padding: 12px 16px;
           cursor: pointer;
           transition: all 0.2s ease;
-          color: #FFFFFF; /* High contrast text */
-          opacity: 1 !important; /* Force full opacity */
+          color: var(--text-muted);
         }
         .custom-select-option:hover {
-          background: rgba(108, 99, 255, 0.2);
-          color: #FFFFFF;
+          background: rgba(108, 99, 255, 0.1);
+          color: var(--primary);
         }
         .custom-select-option.selected {
-          background: #6C63FF;
+          background: var(--primary);
           color: white;
+        }
+        .custom-select-trigger span:empty::before {
+          content: attr(data-placeholder);
+          color: var(--text-secondary);
         }
         /* Scrollbar for options */
         .custom-select-options::-webkit-scrollbar {
           width: 4px;
         }
         .custom-select-options::-webkit-scrollbar-thumb {
-          background: #6C63FF;
+          background: var(--primary);
           border-radius: 2px;
         }
       `}</style>
