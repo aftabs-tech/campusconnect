@@ -135,7 +135,7 @@ function Resources() {
     try {
       let query = [];
       if (category !== 'all') query.push(`category=${category}`);
-      if (semester !== 'all') query.push(`semester=${semester}`);
+      if (semester !== 'all' && !activeFolderId) query.push(`semester=${semester}`);
       // if not inside a folder, apply yearFilter (if 'all' view without active folder)
       if (yearFilter !== 'all' && !activeFolderId) query.push(`year=${yearFilter}`);
       if (search) query.push(`search=${search}`);
@@ -288,7 +288,13 @@ function Resources() {
             </button>
             <button 
               className={`tab-btn ${viewMode === 'all' ? 'active' : ''}`}
-              onClick={() => setViewMode('all')}
+              onClick={() => {
+                setActiveFolderId('');
+                setSubject('');
+                setActiveYear('');
+                setActiveCourse('');
+                setViewMode('all');
+              }}
             >
               <FiLayers /> All Resources
             </button>
@@ -461,14 +467,16 @@ function Resources() {
                 icon={FiLayers}
               />
             </div>
-            <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
-              <CustomSelect 
-                options={SEMESTERS}
-                value={semester}
-                onChange={setSemester}
-                icon={FiBookOpen}
-              />
-            </div>
+            {!activeFolderId && (
+              <div className="filter-group" style={{ flex: 1, minWidth: 160 }}>
+                <CustomSelect 
+                  options={SEMESTERS}
+                  value={semester}
+                  onChange={setSemester}
+                  icon={FiBookOpen}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -500,6 +508,7 @@ function Resources() {
                     setActiveYear(Number(folder.year));
                     setActiveCourse(folder.course);
                     setActiveFolderId(folder._id);
+                    setSemester('all'); // Reset semester filter when entering folder
                     setViewMode('all');
                   }}
                 >
