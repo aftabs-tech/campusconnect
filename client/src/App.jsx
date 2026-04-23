@@ -10,6 +10,8 @@ import Events from './pages/Events';
 import Resources from './pages/Resources';
 import People from './pages/People';
 import VerifyOTP from './pages/VerifyOTP';
+import AdminAccess from './pages/AdminAccess';
+import AdminDashboard from './pages/AdminDashboard';
 
 
 function ProtectedRoute({ children }) {
@@ -41,6 +43,8 @@ function App() {
           <Route path="/people" element={<ProtectedRoute><People /></ProtectedRoute>} />
           <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
           <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
+          <Route path="/admin-access" element={<AdminAccess />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Routes>
       </div>
     </>

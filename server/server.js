@@ -38,6 +38,7 @@ app.use('/api/chats', require('./routes/chats'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/resources', require('./routes/resources'));
 app.use('/api/comments', require('./routes/comments'));
+app.use('/api/admin', require('./routes/admin'));
 
 
 // Health check
