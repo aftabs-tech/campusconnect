@@ -155,7 +155,7 @@ function Feed() {
   };
 
   const updatePostCommentCount = (postId, count) => {
-    setPosts(posts.map(p => 
+    setPosts(prevPosts => prevPosts.map(p => 
       p._id === postId ? { ...p, localCommentCount: count } : p
     ));
   };
@@ -437,7 +437,7 @@ function Feed() {
 
                 <button className="post-action-btn"
                   onClick={() => setShowComments({ ...showComments, [post._id]: !showComments[post._id] })}>
-                  <FiMessageCircle className="icon" /> {post.localCommentCount !== undefined ? post.localCommentCount : (post.comments?.length || 0)}
+                  <FiMessageCircle className="icon" /> {post.localCommentCount !== undefined ? post.localCommentCount : (post.commentCount || 0)}
                 </button>
 
                 <button 

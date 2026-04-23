@@ -415,7 +415,7 @@ function Profile() {
                     </div>
                   )}
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-                    {timeAgo(post.createdAt)} · ❤️ {post.likes?.length || 0} · 💬 {post.comments?.length || 0}
+                    {timeAgo(post.createdAt)} · ❤️ {post.likes?.length || 0} · 💬 {post.commentCount || 0}
                   </div>
                 </div>
               ))
@@ -452,7 +452,7 @@ function Profile() {
                       </div>
                     )}
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{timeAgo(post.createdAt)} · ❤️ {post.likes?.length || 0} · 💬 {post.comments?.length || 0}</span>
+                      <span>{timeAgo(post.createdAt)} · ❤️ {post.likes?.length || 0} · 💬 {post.commentCount || 0}</span>
                       <span style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <FiBookmark style={{ fill: 'var(--primary)' }} /> Saved
                       </span>

@@ -30,14 +30,24 @@ const CommentSection = ({ postId, onCommentCountChange }) => {
     if (e) e.preventDefault();
     if (!text.trim()) return;
 
+    const newCommentText = text.trim();
+    setText(''); // Clear input immediately
     setSubmitting(true);
+
     try {
-      const { data } = await API.post('/comments', { postId, text });
-      setComments([data, ...comments]);
-      setText('');
-      if (onCommentCountChange) onCommentCountChange(comments.length + 1);
+      const { data } = await API.post('/comments', { postId, text: newCommentText });
+      
+      // Update local comments state using functional update to avoid stale closure
+      setComments(prevComments => {
+        const updatedComments = [data, ...prevComments];
+        // Sync the count with parent immediately
+        if (onCommentCountChange) onCommentCountChange(updatedComments.length);
+        return updatedComments;
+      });
     } catch (err) {
       console.error('Error adding comment:', err);
+      // Optionally restore text if failed
+      setText(newCommentText);
     } finally {
       setSubmitting(false);
     }
@@ -46,8 +56,11 @@ const CommentSection = ({ postId, onCommentCountChange }) => {
   const handleDeleteComment = async (commentId) => {
     try {
       await API.delete(`/comments/${commentId}`);
-      setComments(comments.filter(c => c._id !== commentId));
-      if (onCommentCountChange) onCommentCountChange(comments.length - 1);
+      setComments(prevComments => {
+        const updatedComments = prevComments.filter(c => c._id !== commentId);
+        if (onCommentCountChange) onCommentCountChange(updatedComments.length);
+        return updatedComments;
+      });
     } catch (err) {
       console.error('Error deleting comment:', err);
     }

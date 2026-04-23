@@ -21,15 +21,21 @@ router.get('/', protect, async (req, res) => {
 
     const posts = await Post.find(filter)
       .populate('author', 'name avatar role college')
-      .populate('comments.user', 'name avatar role')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
+    // Fetch comment counts for each post from the separate Comment model
+    const Comment = require('../models/Comment');
+    const postsWithCounts = await Promise.all(posts.map(async (post) => {
+      const commentCount = await Comment.countDocuments({ postId: post._id });
+      return { ...post.toObject(), commentCount };
+    }));
+
     const total = await Post.countDocuments(filter);
 
     res.json({
-      posts,
+      posts: postsWithCounts,
       page,
       pages: Math.ceil(total / limit),
       total
@@ -44,10 +50,15 @@ router.get('/user/:userId', protect, async (req, res) => {
   try {
     const posts = await Post.find({ author: req.params.userId })
       .populate('author', 'name avatar role college')
-      .populate('comments.user', 'name avatar role')
       .sort({ createdAt: -1 });
 
-    res.json(posts);
+    const Comment = require('../models/Comment');
+    const postsWithCounts = await Promise.all(posts.map(async (post) => {
+      const commentCount = await Comment.countDocuments({ postId: post._id });
+      return { ...post.toObject(), commentCount };
+    }));
+
+    res.json(postsWithCounts);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -338,15 +349,21 @@ router.get('/saved', protect, async (req, res) => {
     const user = await User.findById(req.user._id).populate({
       path: 'savedPosts',
       populate: [
-        { path: 'author', select: 'name avatar role college' },
-        { path: 'comments.user', select: 'name avatar role' }
+        { path: 'author', select: 'name avatar role college' }
       ]
     });
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Reverse the saved posts to show the most recently saved first
-    const saved = [...user.savedPosts].reverse();
+    // Reverse the saved posts and fetch comment counts
+    const Comment = require('../models/Comment');
+    const savedWithCounts = await Promise.all(user.savedPosts.map(async (post) => {
+      const pObj = post.toObject();
+      const commentCount = await Comment.countDocuments({ postId: pObj._id });
+      return { ...pObj, commentCount };
+    }));
+
+    const saved = [...savedWithCounts].reverse();
     res.json(saved);
   } catch (error) {
     res.status(500).json({ message: error.message });
