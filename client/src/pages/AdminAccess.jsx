@@ -15,12 +15,13 @@ function AdminAccess() {
 
     try {
       const { data } = await API.post('/admin/verify', { secret });
-      if (data.success) {
-        // Store secret in session storage for the current session
-        sessionStorage.setItem('admin_secret', secret);
+      if (data.success && data.isAdmin) {
+        localStorage.setItem('admin_secret', secret);
+        localStorage.setItem('isAdmin', 'true');
         navigate('/admin-dashboard');
       }
     } catch (err) {
+      console.error('Verify error:', err);
       setError(err.response?.data?.message || 'Invalid secret key');
     } finally {
       setLoading(false);

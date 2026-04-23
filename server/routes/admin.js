@@ -24,7 +24,7 @@ const adminProtect = (req, res, next) => {
 router.post('/verify', (req, res) => {
   const { secret } = req.body;
   if (secret && secret === process.env.ADMIN_SECRET) {
-    res.json({ success: true });
+    res.json({ success: true, isAdmin: true });
   } else {
     res.status(403).json({ success: false, message: 'Invalid admin secret' });
   }

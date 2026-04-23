@@ -9,37 +9,51 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('users');
   const navigate = useNavigate();
-  const adminSecret = sessionStorage.getItem('admin_secret');
+  
+  const adminSecret = localStorage.getItem('admin_secret');
+  const isAdmin = localStorage.getItem('isAdmin');
 
   const getHeaders = useCallback(() => {
     return { headers: { 'x-admin-secret': adminSecret } };
   }, [adminSecret]);
 
   useEffect(() => {
-    if (!adminSecret) {
+    if (!isAdmin || !adminSecret) {
       navigate('/admin-access');
       return;
     }
     fetchData();
-  }, [adminSecret, navigate]);
+  }, [adminSecret, isAdmin, navigate]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const usersRes = await API.get('/admin/users', getHeaders());
-      const statsRes = await API.get('/admin/stats', getHeaders());
+      console.log('Admin: Fetching data...');
+      const [usersRes, statsRes] = await Promise.all([
+        API.get('/admin/users', getHeaders()),
+        API.get('/admin/stats', getHeaders())
+      ]);
+      
       setUsers(usersRes.data);
       setStats(statsRes.data);
+      console.log('Admin: Data fetch success', { 
+        users: usersRes.data.length, 
+        stats: Object.keys(statsRes.data).map(k => `${k}: ${statsRes.data[k].length}`) 
+      });
     } catch (err) {
-      console.error(err);
-      if (err.response?.status === 403) navigate('/admin-access');
+      console.error('Admin: Fetch data failed', err);
+      if (err.response?.status === 403) {
+        localStorage.removeItem('admin_secret');
+        localStorage.removeItem('isAdmin');
+        navigate('/admin-access');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const deleteItem = async (type, id) => {
-    if (!window.confirm(`Are you sure you want to delete this ${type}? This action CANNOT be undone.`)) return;
+    if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
     try {
       await API.delete(`/admin/${type}s/${id}`, getHeaders());
       if (type === 'user') setUsers(users.filter(u => u._id !== id));
@@ -48,16 +62,25 @@ function AdminDashboard() {
       else if (type === 'event') setStats({ ...stats, events: stats.events.filter(e => e._id !== id) });
       else if (type === 'folder') setStats({ ...stats, folders: stats.folders.filter(f => f._id !== id) });
     } catch (err) {
+      console.error(`Admin: Delete ${type} failed`, err);
       alert('Delete failed');
     }
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('admin_secret');
+    localStorage.removeItem('admin_secret');
+    localStorage.removeItem('isAdmin');
     navigate('/admin-access');
   };
 
-  if (loading) return <div className="loader"><div className="spinner"></div></div>;
+  if (loading) {
+    return (
+      <div className="loader" style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="spinner"></div>
+        <p style={{ marginTop: 20, color: 'var(--text-muted)' }}>Loading administrative data...</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '40px 20px', maxWidth: 1210, margin: '0 auto' }}>
@@ -79,13 +102,13 @@ function AdminDashboard() {
           <FiUser /> Users ({users.length})
         </button>
         <button className={`btn btn-sm ${activeTab === 'posts' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('posts')}>
-          <FiFileText /> Posts ({stats.posts.length})
+          <FiFileText /> Posts ({stats.posts?.length || 0})
         </button>
         <button className={`btn btn-sm ${activeTab === 'events' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('events')}>
-          <FiCalendar /> Events ({stats.events.length})
+          <FiCalendar /> Events ({stats.events?.length || 0})
         </button>
         <button className={`btn btn-sm ${activeTab === 'folders' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('folders')}>
-          <FiFolder /> Folders ({stats.folders.length})
+          <FiFolder /> Folders ({stats.folders?.length || 0})
         </button>
       </div>
 
@@ -104,7 +127,7 @@ function AdminDashboard() {
                 <>
                   <th>Subject</th>
                   <th>Year/Sem</th>
-                  <th>Files</th>
+                  <th>Actions</th>
                 </>
               ) : (
                 <>
@@ -121,7 +144,7 @@ function AdminDashboard() {
                 <td style={{ padding: '15px 20px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div className="avatar avatar-sm">
-                      {u.avatar ? <img src={getImageUrl(u.avatar)} alt="" /> : u.name[0]}
+                      {u.avatar ? <img src={getImageUrl(u.avatar)} alt="" /> : u.name?.[0]}
                     </div>
                     <span style={{ fontWeight: 600 }}>{u.name}</span>
                   </div>
@@ -135,7 +158,7 @@ function AdminDashboard() {
               </tr>
             ))}
 
-            {activeTab === 'posts' && stats.posts.map(p => (
+            {activeTab === 'posts' && stats.posts?.map(p => (
               <tr key={p._id} style={{ borderBottom: '1px solid var(--border)' }}>
                 <td style={{ padding: '15px 20px' }}>
                   <div style={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -150,7 +173,7 @@ function AdminDashboard() {
               </tr>
             ))}
 
-            {activeTab === 'events' && stats.events.map(e => (
+            {activeTab === 'events' && stats.events?.map(e => (
               <tr key={e._id} style={{ borderBottom: '1px solid var(--border)' }}>
                 <td style={{ padding: '15px 20px' }}>
                   <div style={{ fontWeight: 600 }}>{e.title}</div>
@@ -164,7 +187,7 @@ function AdminDashboard() {
               </tr>
             ))}
 
-            {activeTab === 'folders' && stats.folders.map(f => (
+            {activeTab === 'folders' && stats.folders?.map(f => (
               <tr key={f._id} style={{ borderBottom: '1px solid var(--border)' }}>
                 <td style={{ padding: '15px 20px' }}>
                   <div style={{ fontWeight: 600 }}>{f.name || f.subject}</div>
@@ -173,7 +196,7 @@ function AdminDashboard() {
                 <td>{f.subject}</td>
                 <td>{f.year} Year / {f.semester} Sem</td>
                 <td style={{ padding: '15px 20px', textAlign: 'right' }}>
-                  <button className="btn-icon" onClick={() => deleteItem('folder', f._id)} title="Delete folder and ALL its files" style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
+                  <button className="btn-icon" onClick={() => deleteItem('folder', f._id)} style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
                 </td>
               </tr>
             ))}
