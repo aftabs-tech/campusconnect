@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import API, { getImageUrl } from '../api/axios';
 import { FiMessageCircle, FiSend, FiTrash2, FiImage, FiSearch, FiBarChart2, FiPlus, FiX, FiCheck, FiBookmark } from 'react-icons/fi';
+import CommentSection from '../components/CommentSection';
 
 
 const REACTION_EMOJIS = ['❤️', '🔥', '😂', '👏', '😮', '💡'];
@@ -153,18 +154,10 @@ function Feed() {
     }
   };
 
-  const handleComment = async (postId) => {
-    const text = commentTexts[postId];
-    if (!text?.trim()) return;
-    try {
-      const { data } = await API.post(`/posts/${postId}/comments`, { text });
-      setPosts(posts.map(p =>
-        p._id === postId ? { ...p, comments: data } : p
-      ));
-      setCommentTexts({ ...commentTexts, [postId]: '' });
-    } catch (err) {
-      console.error('Error adding comment:', err);
-    }
+  const updatePostCommentCount = (postId, count) => {
+    setPosts(posts.map(p => 
+      p._id === postId ? { ...p, localCommentCount: count } : p
+    ));
   };
 
   const handleVote = async (postId, optionIndex) => {
@@ -444,7 +437,7 @@ function Feed() {
 
                 <button className="post-action-btn"
                   onClick={() => setShowComments({ ...showComments, [post._id]: !showComments[post._id] })}>
-                  <FiMessageCircle className="icon" /> {post.comments?.length || 0}
+                  <FiMessageCircle className="icon" /> {post.localCommentCount !== undefined ? post.localCommentCount : (post.comments?.length || 0)}
                 </button>
 
                 <button 
@@ -475,30 +468,10 @@ function Feed() {
 
               {/* Comments */}
               {showComments[post._id] && (
-                <div className="comments-section">
-                  {post.comments?.length > 0 && (
-                    <div className="comment-list">
-                      {post.comments.map((c, i) => (
-                        <div key={c._id || i} className="comment-item">
-                          {renderAvatar(c.user, 'avatar-sm')}
-                          <div className="comment-content">
-                            <div className="name">
-                              {c.user?.name || 'Unknown'}
-                              {c.user?.role && <span className={`badge badge-${c.user.role}`} style={{ marginLeft: 6, fontSize: 9 }}>{c.user.role}</span>}
-                            </div>
-                            <div className="text">{c.text}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="comment-input">
-                    <input type="text" placeholder="Write a comment..." value={commentTexts[post._id] || ''}
-                      onChange={(e) => setCommentTexts({ ...commentTexts, [post._id]: e.target.value })}
-                      onKeyDown={(e) => e.key === 'Enter' && handleComment(post._id)} />
-                    <button className="btn btn-primary btn-sm" onClick={() => handleComment(post._id)}><FiSend /></button>
-                  </div>
-                </div>
+                <CommentSection 
+                  postId={post._id} 
+                  onCommentCountChange={(count) => updatePostCommentCount(post._id, count)} 
+                />
               )}
             </div>
           );

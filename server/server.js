@@ -37,6 +37,7 @@ app.use('/api/events', require('./routes/events'));
 app.use('/api/chats', require('./routes/chats'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/resources', require('./routes/resources'));
+app.use('/api/comments', require('./routes/comments'));
 
 
 // Health check
