@@ -32,6 +32,10 @@ function Navbar() {
         setUnreadCount(prev => prev + 1);
       });
 
+      socketRef.current.on('unreadCountUpdate', (count) => {
+        setUnreadCount(count);
+      });
+
       // Listen for notification refresh events from other components (e.g. Chat page)
       const handleNotificationsUpdated = () => fetchNotifications();
       window.addEventListener('notifications-updated', handleNotificationsUpdated);

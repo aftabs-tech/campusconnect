@@ -60,6 +60,16 @@ function Feed() {
 
   useEffect(() => {
     fetchPosts(page, searchQuery);
+    
+    // Auto-read notifications if post ID is in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const postFromUrl = urlParams.get('post');
+    if (postFromUrl) {
+      setShowComments(prev => ({ ...prev, [postFromUrl]: true }));
+      API.put(`/notifications/read-post/${postFromUrl}`).then(() => {
+        window.dispatchEvent(new Event('notifications-updated'));
+      }).catch(() => {});
+    }
   }, [page]);
 
   const fetchPosts = async (currentPage, search = '') => {
@@ -158,6 +168,20 @@ function Feed() {
     setPosts(prevPosts => prevPosts.map(p => 
       p._id === postId ? { ...p, localCommentCount: count } : p
     ));
+  };
+
+  const toggleComments = async (postId) => {
+    const isOpening = !showComments[postId];
+    setShowComments({ ...showComments, [postId]: isOpening });
+    
+    if (isOpening) {
+      try {
+        await API.put(`/notifications/read-post/${postId}`);
+        window.dispatchEvent(new Event('notifications-updated'));
+      } catch (err) {
+        console.error('Error marking notifications as read:', err);
+      }
+    }
   };
 
   const handleVote = async (postId, optionIndex) => {
@@ -436,7 +460,7 @@ function Feed() {
                 </div>
 
                 <button className="post-action-btn"
-                  onClick={() => setShowComments({ ...showComments, [post._id]: !showComments[post._id] })}>
+                  onClick={() => toggleComments(post._id)}>
                   <FiMessageCircle className="icon" /> {post.localCommentCount !== undefined ? post.localCommentCount : (post.commentCount || 0)}
                 </button>
 
