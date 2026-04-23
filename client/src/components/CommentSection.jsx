@@ -19,20 +19,23 @@ const CommentSection = ({ postId, onCommentCountChange }) => {
     
     socket.emit('joinPost', postId);
 
-    socket.on('newComment', (newComment) => {
+    const handleNewComment = (newComment) => {
+      const incomingPostId = (newComment.postId?._id || newComment.postId)?.toString();
+      if (incomingPostId !== postId.toString()) return;
+
       setComments((prev) => {
-        // Prevent duplicates
         if (prev.some(c => c._id === newComment._id)) return prev;
         const updated = [newComment, ...prev];
-        // Sync count with parent
         if (onCommentCountChange) onCommentCountChange(updated.length);
         return updated;
       });
-    });
+    };
+
+    socket.on('newComment', handleNewComment);
 
     return () => {
       socket.emit('leavePost', postId);
-      socket.off('newComment');
+      socket.off('newComment', handleNewComment);
     };
   }, [postId]);
 
