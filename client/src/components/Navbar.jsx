@@ -23,6 +23,11 @@ function Navbar() {
     if (user) {
       fetchNotifications();
       
+      // Request browser notification permission
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+
       // Init socket
       socketRef.current = io(SOCKET_URL);
       socketRef.current.emit('joinUser', user._id);
@@ -30,6 +35,23 @@ function Navbar() {
       socketRef.current.on('newNotification', (notification) => {
         setNotifications(prev => [notification, ...prev]);
         setUnreadCount(prev => prev + 1);
+
+        // Browser Popup Notification
+        if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+          audio.play().catch(e => console.log('Audio play failed:', e));
+
+          const popup = new Notification("CampusConnect", {
+            body: notification.message,
+            icon: '/icon-192.png' // Fallback icon path
+          });
+
+          popup.onclick = () => {
+            window.focus();
+            if (notification.link) navigate(notification.link);
+            popup.close();
+          };
+        }
       });
 
       socketRef.current.on('unreadCountUpdate', (count) => {
