@@ -27,7 +27,9 @@ router.post('/', protect, async (req, res) => {
       text
     });
 
-    const populatedComment = await Comment.findById(comment._id).populate('userId', 'name avatar role');
+    const populatedComment = await Comment.findById(comment._id)
+      .populate('userId', 'name avatar role')
+      .populate('replies.userId', 'name avatar role');
 
     // Create notification for post author
     if (post.author.toString() !== req.user._id.toString()) {
@@ -70,6 +72,7 @@ router.get('/:postId', protect, async (req, res) => {
   try {
     const comments = await Comment.find({ postId: req.params.postId })
       .populate('userId', 'name avatar role')
+      .populate('replies.userId', 'name avatar role')
       .sort({ createdAt: -1 });
 
     res.json(comments);
@@ -119,6 +122,36 @@ router.put('/:commentId/like', protect, async (req, res) => {
 
     await comment.save();
     res.json(comment.likes);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Add a reply to a comment
+// @route   POST /api/comments/:commentId/reply
+// @access  Private
+router.post('/:commentId/reply', protect, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ message: 'Reply text is required' });
+
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    const reply = {
+      userId: req.user._id,
+      text,
+      createdAt: new Date()
+    };
+
+    comment.replies.push(reply);
+    await comment.save();
+
+    const populatedComment = await Comment.findById(comment._id)
+      .populate('userId', 'name avatar role')
+      .populate('replies.userId', 'name avatar role');
+
+    res.status(201).json(populatedComment);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
