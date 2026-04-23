@@ -42,10 +42,18 @@ router.post('/', protect, async (req, res) => {
         });
 
         if (req.app.get('io')) {
-          req.app.get('io').to(post.author.toString()).emit('newNotification', notification);
+          const io = req.app.get('io');
+          io.to(post.author.toString()).emit('newNotification', notification);
+          // Also emit to the post room for real-time comment updates
+          io.to(postId.toString()).emit('newComment', populatedComment);
         }
       } catch (err) {
         console.error('Notification error:', err);
+      }
+    } else {
+      // If author is the one commenting, still emit to the room (others need to see it)
+      if (req.app.get('io')) {
+        req.app.get('io').to(postId.toString()).emit('newComment', populatedComment);
       }
     }
 

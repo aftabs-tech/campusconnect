@@ -914,6 +914,16 @@ select.input-field option {
   border-color: var(--primary);
 }
 
+.comment-item.new-comment {
+  animation: highlight 3s ease-out;
+  border-radius: var(--radius-md);
+}
+
+@keyframes highlight {
+  0% { background: rgba(108, 99, 255, 0.15); }
+  100% { background: transparent; }
+}
+
 /* ===== Chat Page ===== */
 .chat-layout {
   display: grid;

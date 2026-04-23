@@ -54,6 +54,16 @@ io.on('connection', (socket) => {
     console.log(`User ${socket.id} joined room ${userId}`);
   });
 
+  socket.on('joinPost', (postId) => {
+    socket.join(postId);
+    console.log(`User ${socket.id} joined post room ${postId}`);
+  });
+
+  socket.on('leavePost', (postId) => {
+    socket.leave(postId);
+    console.log(`User ${socket.id} left post room ${postId}`);
+  });
+
   socket.on('joinChat', (chatId) => {
     socket.join(chatId);
     console.log(`User ${socket.id} joined chat ${chatId}`);

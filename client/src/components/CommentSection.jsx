@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import API, { getImageUrl } from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { FiSend, FiTrash2, FiHeart } from 'react-icons/fi';
+import socket from '../api/socket';
 
 const CommentSection = ({ postId, onCommentCountChange }) => {
   const { user } = useAuth();
@@ -12,6 +13,27 @@ const CommentSection = ({ postId, onCommentCountChange }) => {
 
   useEffect(() => {
     fetchComments();
+
+    // Socket real-time integration
+    if (!socket.connected) socket.connect();
+    
+    socket.emit('joinPost', postId);
+
+    socket.on('newComment', (newComment) => {
+      setComments((prev) => {
+        // Prevent duplicates
+        if (prev.some(c => c._id === newComment._id)) return prev;
+        const updated = [newComment, ...prev];
+        // Sync count with parent
+        if (onCommentCountChange) onCommentCountChange(updated.length);
+        return updated;
+      });
+    });
+
+    return () => {
+      socket.emit('leavePost', postId);
+      socket.off('newComment');
+    };
   }, [postId]);
 
   const fetchComments = async () => {
@@ -34,19 +56,35 @@ const CommentSection = ({ postId, onCommentCountChange }) => {
     setText(''); // Clear input immediately
     setSubmitting(true);
 
+    // Optimistic UI Update
+    const tempId = `temp-${Date.now()}`;
+    const optimisticComment = {
+      _id: tempId,
+      text: newCommentText,
+      userId: user,
+      createdAt: new Date().toISOString(),
+      likes: [],
+      isOptimistic: true
+    };
+
+    setComments(prev => [optimisticComment, ...prev]);
+
     try {
       const { data } = await API.post('/comments', { postId, text: newCommentText });
       
-      // Update local comments state using functional update to avoid stale closure
+      // Update local comments state: replace optimistic comment with real data
       setComments(prevComments => {
-        const updatedComments = [data, ...prevComments];
-        // Sync the count with parent immediately
+        const filtered = prevComments.filter(c => c._id !== tempId);
+        // Ensure we don't have a duplicate if socket already delivered it
+        if (filtered.some(c => c._id === data._id)) return filtered;
+        const updatedComments = [data, ...filtered];
         if (onCommentCountChange) onCommentCountChange(updatedComments.length);
         return updatedComments;
       });
     } catch (err) {
       console.error('Error adding comment:', err);
-      // Optionally restore text if failed
+      // Remove optimistic comment on error and restore text
+      setComments(prev => prev.filter(c => c._id !== tempId));
       setText(newCommentText);
     } finally {
       setSubmitting(false);
@@ -126,7 +164,7 @@ const CommentSection = ({ postId, onCommentCountChange }) => {
       ) : (
         <div className="comment-list" style={{ marginTop: 16 }}>
           {comments.map((comment) => (
-            <div key={comment._id} className="comment-item">
+            <div key={comment._id} className={`comment-item ${comment.isOptimistic ? 'new-comment' : ''}`}>
               {renderAvatar(comment.userId)}
               <div className="comment-content">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
