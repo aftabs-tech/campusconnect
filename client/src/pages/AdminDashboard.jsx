@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API, { getImageUrl } from '../api/axios';
-import { FiTrash2, FiUser, FiFileText, FiBook, FiLogOut } from 'react-icons/fi';
+import { FiTrash2, FiUser, FiFileText, FiFolder, FiCalendar, FiLogOut } from 'react-icons/fi';
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
-  const [stats, setStats] = useState({ posts: [], resources: [] });
+  const [stats, setStats] = useState({ posts: [], resources: [], events: [], folders: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('users');
   const navigate = useNavigate();
@@ -39,12 +39,14 @@ function AdminDashboard() {
   };
 
   const deleteItem = async (type, id) => {
-    if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete this ${type}? This action CANNOT be undone.`)) return;
     try {
       await API.delete(`/admin/${type}s/${id}`, getHeaders());
       if (type === 'user') setUsers(users.filter(u => u._id !== id));
       else if (type === 'post') setStats({ ...stats, posts: stats.posts.filter(p => p._id !== id) });
       else if (type === 'resource') setStats({ ...stats, resources: stats.resources.filter(r => r._id !== id) });
+      else if (type === 'event') setStats({ ...stats, events: stats.events.filter(e => e._id !== id) });
+      else if (type === 'folder') setStats({ ...stats, folders: stats.folders.filter(f => f._id !== id) });
     } catch (err) {
       alert('Delete failed');
     }
@@ -58,35 +60,32 @@ function AdminDashboard() {
   if (loading) return <div className="loader"><div className="spinner"></div></div>;
 
   return (
-    <div style={{ padding: '40px 20px', maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ padding: '40px 20px', maxWidth: 1210, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40 }}>
         <div>
           <h1 style={{ fontSize: 32 }}>Admin Dashboard</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Moderation Panel for CampusConnect</p>
+          <p style={{ color: 'var(--text-muted)' }}>Global Moderation Panel for CampusConnect</p>
         </div>
-        <button className="btn btn-secondary" onClick={handleLogout}>
-          <FiLogOut /> Logout
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+           <button className="btn btn-secondary" onClick={fetchData}>Refresh Data</button>
+           <button className="btn btn-secondary" onClick={handleLogout}>
+            <FiLogOut /> Logout
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 30 }}>
-        <button 
-          className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('users')}
-        >
+      <div style={{ display: 'flex', gap: 8, marginBottom: 30, flexWrap: 'wrap' }}>
+        <button className={`btn btn-sm ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('users')}>
           <FiUser /> Users ({users.length})
         </button>
-        <button 
-          className={`btn ${activeTab === 'posts' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('posts')}
-        >
+        <button className={`btn btn-sm ${activeTab === 'posts' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('posts')}>
           <FiFileText /> Posts ({stats.posts.length})
         </button>
-        <button 
-          className={`btn ${activeTab === 'resources' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('resources')}
-        >
-          <FiBook /> Resources ({stats.resources.length})
+        <button className={`btn btn-sm ${activeTab === 'events' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('events')}>
+          <FiCalendar /> Events ({stats.events.length})
+        </button>
+        <button className={`btn btn-sm ${activeTab === 'folders' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('folders')}>
+          <FiFolder /> Folders ({stats.folders.length})
         </button>
       </div>
 
@@ -101,9 +100,15 @@ function AdminDashboard() {
                   <th>Role</th>
                   <th>Joined</th>
                 </>
+              ) : activeTab === 'folders' ? (
+                <>
+                  <th>Subject</th>
+                  <th>Year/Sem</th>
+                  <th>Files</th>
+                </>
               ) : (
                 <>
-                  <th>Author</th>
+                  <th>Creator/Author</th>
                   <th>Created</th>
                 </>
               )}
@@ -145,25 +150,39 @@ function AdminDashboard() {
               </tr>
             ))}
 
-            {activeTab === 'resources' && stats.resources.map(r => (
-              <tr key={r._id} style={{ borderBottom: '1px solid var(--border)' }}>
+            {activeTab === 'events' && stats.events.map(e => (
+              <tr key={e._id} style={{ borderBottom: '1px solid var(--border)' }}>
                 <td style={{ padding: '15px 20px' }}>
-                  <div style={{ fontWeight: 600 }}>{r.title}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{r.course} · {r.subject}</div>
+                  <div style={{ fontWeight: 600 }}>{e.title}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{new Date(e.date).toDateString()}</div>
                 </td>
-                <td>{r.uploader?.name || 'System'}</td>
-                <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                <td>{e.organizer?.name}</td>
+                <td>{new Date(e.createdAt).toLocaleDateString()}</td>
                 <td style={{ padding: '15px 20px', textAlign: 'right' }}>
-                  <button className="btn-icon" onClick={() => deleteItem('resource', r._id)} style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
+                  <button className="btn-icon" onClick={() => deleteItem('event', e._id)} style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
+                </td>
+              </tr>
+            ))}
+
+            {activeTab === 'folders' && stats.folders.map(f => (
+              <tr key={f._id} style={{ borderBottom: '1px solid var(--border)' }}>
+                <td style={{ padding: '15px 20px' }}>
+                  <div style={{ fontWeight: 600 }}>{f.name || f.subject}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{f.course}</div>
+                </td>
+                <td>{f.subject}</td>
+                <td>{f.year} Year / {f.semester} Sem</td>
+                <td style={{ padding: '15px 20px', textAlign: 'right' }}>
+                  <button className="btn-icon" onClick={() => deleteItem('folder', f._id)} title="Delete folder and ALL its files" style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {(activeTab === 'users' ? users.length : activeTab === 'posts' ? stats.posts.length : stats.resources.length) === 0 && (
+        {((activeTab === 'users' ? users : stats[activeTab])?.length || 0) === 0 && (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
-            No items found.
+            No {activeTab} found.
           </div>
         )}
       </div>
